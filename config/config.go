@@ -29,6 +29,7 @@ type Settings struct {
 	Raw          string
 	Dns          string
 }
+
 type Config struct {
 	Process map[string]*Settings
 }
@@ -51,13 +52,8 @@ func init() {
 	)
 
 	flag.StringVar(&globalFile, "global", globalConfig, globalUsage)
-	flag.StringVar(&globalFile, "g", globalConfig, globalUsage+" (shorthand)")
-
 	flag.StringVar(&configFile, "config", defaultConfig, usage)
-	flag.StringVar(&configFile, "c", defaultConfig, usage+" (shorthand)")
-
 	flag.StringVar(&overrideFile, "override", overrideConfig, overrideUsage)
-	flag.StringVar(&overrideFile, "o", overrideConfig, overrideUsage+" (shorthand)")
 
 }
 

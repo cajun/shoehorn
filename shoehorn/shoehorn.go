@@ -27,35 +27,39 @@ func handleCommand(args []string) {
 	command.SetProcess(args[1])
 	command.SetConfig(config.Process(args[1]))
 
-	if args[2] == "start" {
+	switch args[2] {
+	case "start":
 		command.Start()
-	} else if args[2] == "stop" {
+	case "stop":
 		command.Stop()
-	} else if args[2] == "restart" {
+	case "restart":
 		command.Restart()
-	} else if args[2] == "kill" {
+	case "kill":
 		command.Kill()
-	} else if args[2] == "bash" {
+	case "bash":
 		command.Bash()
-	} else if args[2] == "console" {
+	case "console":
 		command.Console()
-	} else if args[2] == "params" {
+	case "params":
 		command.PrintParams()
-	} else {
+	default:
 		fmt.Printf("Running Command: (%v) doesn't exists\n", args[2])
 	}
-
 }
 
 // main function pulls in the config and flags.
 // then passes off the commands to the handleParams method
 func main() {
 	config.LoadConfigs()
+
 	flag.Parse()
+
 	args := os.Args
+
 	if len(args) > 1 {
 		handleParam(args)
 	} else {
 		flag.PrintDefaults()
 	}
+
 }
