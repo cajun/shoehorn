@@ -35,8 +35,12 @@ func handleCommand(args []string) {
 		command.Restart()
 	} else if args[2] == "kill" {
 		command.Kill()
-	} else if args[2] == "dns" {
-		command.Dns()
+	} else if args[2] == "bash" {
+		command.Bash()
+	} else if args[2] == "console" {
+		command.Console()
+	} else if args[2] == "params" {
+		command.PrintParams()
 	} else {
 		fmt.Printf("Running Command: (%v) doesn't exists\n", args[2])
 	}

@@ -3,9 +3,9 @@ package command
 import (
 	"fmt"
 	"github.com/cajun/shoehorn/config"
-	"net"
 	"os"
 	"os/exec"
+	"strconv"
 	"strings"
 )
 
@@ -15,14 +15,21 @@ var (
 )
 
 func run() {
-	cmd := exec.Command("ls", "-l")
+	base := []string{"run", "-d"}
+	opts := append(base, settingsToParams()...)
+	fmt.Printf("docker %s\n", strings.Join(opts, " "))
+	cmd := exec.Command("docker", opts...)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	cmd.Run()
 }
 
 func runInteractive() {
-	cmd := exec.Command("irb")
+	base := []string{"run", "-i", "-t"}
+	opts := append(base, settingsToParams()...)
+	fmt.Printf("docker %s\n", strings.Join(opts, " "))
+	cmd := exec.Command("docker", opts...)
+	fmt.Printf("args %s\n", cmd.Args)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	cmd.Stdin = os.Stdin
@@ -37,34 +44,47 @@ func SetProcess(proc string) {
 	process = proc
 }
 
+func PrintParams() {
+	fmt.Println(settingsToParams())
+}
+
 // settingsToParams converts the parameters in the configuration file
 // to params that will be passed into docker.
-func settingsToParams() string {
-	opts := []string{}
-	opts = append(opts, cfg.Options)
-	opts = append(opts, limitOpts())
-	opts = append(opts, dnsOpts())
-	opts = append(opts, volumnsOpts())
+func settingsToParams() (opts []string) {
+	if cfg.Options != "" {
+		opts = append(opts, cfg.Options)
+	}
+
+	opts = append(opts, limitOpts()...)
+
+	if cfg.Dns != "" {
+		opts = append(opts, dnsOpts()...)
+	}
+
+	if len(volumnsOpts()) != 0 {
+		opts = append(opts, volumnsOpts()...)
+	}
+
 	opts = append(opts, cfg.Container)
-	opts = append(opts, cfg.StartCmd)
+	opts = append(opts, strings.Split(cfg.StartCmd, " ")...)
 
-	return strings.Join(opts, " ")
+	return
 }
 
-func limitOpts() string {
-	return fmt.Sprintf("-m %v", cfg.Bytes)
+func limitOpts() []string {
+	return []string{"-m", strconv.Itoa(cfg.Bytes)}
 }
 
-func dnsOpts() string {
-	return fmt.Sprintf("-dns %v", "127.0.0.1")
+func dnsOpts() []string {
+	return []string{"-dns", cfg.Dns}
 }
 
-func volumnsOpts() string {
+func volumnsOpts() []string {
 	volumns := []string{}
 	for volumn := range cfg.Volumn {
 		volumns = append(volumns, fmt.Sprintf("-v %v", volumn))
 	}
-	return strings.Join(volumns, " ")
+	return volumns
 }
 
 func Start() {
@@ -86,23 +106,15 @@ func Kill() {
 	fmt.Printf("Killing %v\n", process)
 }
 
-func Dns() {
-	xips, _ := net.InterfaceAddrs()
-	for index := range xips {
-		fmt.Printf("DNS ip: %v\n", xips[index].Network())
-		fmt.Printf("DNS name: %v\n", xips[index].String())
-	}
-
-	ips, _ := net.LookupNS("swap")
-	fmt.Printf("HOST : %v\n", ips)
-
+func Console() {
+	cfg.StartCmd = cfg.Console
+	runInteractive()
 }
 
-//func Console() {
-//}
-
-//func Bash() {
-//}
+func Bash() {
+	cfg.StartCmd = "/bin/bash"
+	runInteractive()
+}
 
 //func IP() {
 //}

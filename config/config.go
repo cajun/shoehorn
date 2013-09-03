@@ -13,6 +13,7 @@ import (
 type Settings struct {
 	App          string
 	StartCmd     string
+	Console      string
 	Options      string
 	Instances    int
 	Port         int
@@ -26,6 +27,7 @@ type Settings struct {
 	Volumn       []string
 	RemoteVolumn string
 	Raw          string
+	Dns          string
 }
 type Config struct {
 	Process map[string]*Settings
