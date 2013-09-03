@@ -13,6 +13,7 @@ import (
 type Settings struct {
 	App          string
 	StartCmd     string
+	Options      string
 	Instances    int
 	Port         int
 	PublicPort   int
@@ -27,7 +28,7 @@ type Settings struct {
 	Raw          string
 }
 type Config struct {
-	App map[string]*Settings
+	Process map[string]*Settings
 }
 
 var (
@@ -39,11 +40,11 @@ var (
 
 func init() {
 	const (
-		globalConfig   = "$HOME/global.cfg"
+		globalConfig   = "$HOME/.shoehorn.cfg"
 		globalUsage    = "configuration file for this app"
-		defaultConfig  = "config.cfg"
+		defaultConfig  = "shoehorn.cfg"
 		usage          = "configuration file for this app"
-		overrideConfig = "override.cfg"
+		overrideConfig = "shoehorn.override.cfg"
 		overrideUsage  = "configuration file for this app"
 	)
 
@@ -59,19 +60,22 @@ func init() {
 }
 
 func LoadConfigs() {
+	defer setDefaults(&cfg) // Load the defaults at the end of the function call
 	gcfg.ReadFileInto(&cfg, globalFile)
 	gcfg.ReadFileInto(&cfg, configFile)
 	gcfg.ReadFileInto(&cfg, overrideFile)
-	setDefaults(&cfg)
 }
 
+// setDefaults fills out the configuration with safe defaults to ensure
+// no process will try to take over the system by default
 func setDefaults(cfg *Config) {
-	for section, value := range cfg.App {
+	for section, value := range cfg.Process {
 		if value.App == "" {
 			path, _ := os.Getwd()
 			dir := filepath.Base(path)
 			value.App = dir + "_" + section
 		}
+
 		if value.Instances == 0 {
 			value.Instances = 1
 		}
@@ -90,46 +94,49 @@ func setDefaults(cfg *Config) {
 	}
 }
 
+// List out the available processes
 func List() []string {
 	list := []string{}
-	for k, _ := range cfg.App {
+	for k := range cfg.Process {
 		list = append(list, k)
 	}
 	return list
 }
 
-func App(name string) *Settings {
-	return cfg.App[name]
+// Process pulls the settings for the given process
+func Process(name string) *Settings {
+	return cfg.Process[name]
 }
 
-// printApps prints out the listing of all the sections in the config file
-func PrintApps() {
+// PrintProcesses prints out the listing of all the sections in the config file
+func PrintProcesses() {
 	fmt.Println("** List of Apps **")
 	fmt.Println(List())
 }
 
 func printSetting(name string, value string) {
 	if value != "" {
-		fmt.Println(name + value)
+		fmt.Printf("%20v  %v\n", name+":", value)
 	}
 }
 
 func PrintConfig(name string) {
-	settings := App(name)
-	fmt.Println("Section [" + name + "]")
+	settings := Process(name)
+	fmt.Println("Process [" + name + "]")
 
-	printSetting("App Name: ", settings.App)
-	printSetting("Start Command: ", settings.StartCmd)
-	printSetting("Number of Instances: ", strconv.Itoa(settings.Instances))
-	printSetting("Private Port: ", strconv.Itoa(settings.Port))
-	printSetting("Public Port: ", strconv.Itoa(settings.PublicPort))
-	printSetting("RAM in GB: ", strconv.Itoa(settings.GB))
-	printSetting("RAM in MB: ", strconv.Itoa(settings.MB))
-	printSetting("RAM in Bytes: ", strconv.Itoa(settings.Bytes))
-	printSetting("Domain: ", strings.Join(settings.Domain, " "))
-	printSetting("Kill Process?: ", strconv.FormatBool(settings.Kill))
-	printSetting("Container Name: ", settings.Container)
-	printSetting("Volumn(s): ", strings.Join(settings.Volumn, " "))
-	printSetting("Remote Volumn: ", settings.RemoteVolumn)
-	printSetting("Raw Command: ", settings.Raw)
+	printSetting("App Name", settings.App)
+	printSetting("Start Command", settings.StartCmd)
+	printSetting("Number of Instances", strconv.Itoa(settings.Instances))
+	printSetting("Private Port", strconv.Itoa(settings.Port))
+	printSetting("Public Port", strconv.Itoa(settings.PublicPort))
+	printSetting("RAM in GB", strconv.Itoa(settings.GB))
+	printSetting("RAM in MB", strconv.Itoa(settings.MB))
+	printSetting("RAM in Bytes", strconv.Itoa(settings.Bytes))
+	printSetting("Domain", strings.Join(settings.Domain, " "))
+	printSetting("Kill Process?", strconv.FormatBool(settings.Kill))
+	printSetting("Container Name", settings.Container)
+	printSetting("Volumn(s)", strings.Join(settings.Volumn, " "))
+	printSetting("Remote Volumn", settings.RemoteVolumn)
+	printSetting("Raw Command", settings.Raw)
+
 }
