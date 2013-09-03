@@ -3,6 +3,7 @@ package command
 import (
 	"fmt"
 	"github.com/cajun/shoehorn/config"
+	"github.com/mgutz/ansi"
 	"os"
 	"os/exec"
 	"strconv"
@@ -14,10 +15,23 @@ var (
 	process string
 )
 
+func outOpts(opts []string) {
+	msg := lime() + "docker %s\n" + reset()
+	fmt.Printf(msg, strings.Join(opts, " "))
+}
+func lime() string {
+	return ansi.ColorCode("green+h:black")
+}
+
+func reset() string {
+	return ansi.ColorCode("reset")
+}
+
 func run() {
 	base := []string{"run", "-d"}
 	opts := append(base, settingsToParams()...)
-	fmt.Printf("docker %s\n", strings.Join(opts, " "))
+	outOpts(opts)
+
 	cmd := exec.Command("docker", opts...)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
@@ -27,9 +41,9 @@ func run() {
 func runInteractive() {
 	base := []string{"run", "-i", "-t"}
 	opts := append(base, settingsToParams()...)
-	fmt.Printf("docker %s\n", strings.Join(opts, " "))
+	outOpts(opts)
+
 	cmd := exec.Command("docker", opts...)
-	fmt.Printf("args %s\n", cmd.Args)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	cmd.Stdin = os.Stdin
