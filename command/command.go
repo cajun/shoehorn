@@ -15,6 +15,10 @@ var (
 	process string
 )
 
+func init() {
+	os.MkdirAll("tmp/pids", os.ModeDir|0700)
+}
+
 func outOpts(opts []string) {
 	msg := lime() + "docker %s\n" + reset()
 	fmt.Printf(msg, strings.Join(opts, " "))
@@ -60,17 +64,20 @@ func SetProcess(proc string) {
 }
 
 func PrintParams() {
-	fmt.Println(settingsToParams())
+	fmt.Println(settingsToParams(0))
 }
 
 // settingsToParams converts the parameters in the configuration file
 // to params that will be passed into docker.
-func settingsToParams() (opts []string) {
+func settingsToParams(instance int) (opts []string) {
 	if cfg.Options != "" {
 		opts = append(opts, cfg.Options)
 	}
 
 	opts = append(opts, limitOpts()...)
+
+	pid := fmt.Sprintf("tmp/pids/%s.%d.pid", process, instance)
+	opts = append(opts, "-cidfile", pid)
 
 	if cfg.Dns != "" {
 		opts = append(opts, dnsOpts()...)
@@ -105,7 +112,7 @@ func Start() {
 	fmt.Printf("Starting %v\n", process)
 	for i := 0; i < cfg.Instances; i++ {
 		fmt.Printf("...Instance %d of %d %s\n", i, cfg.Instances, process)
-		run("run", settingsToParams()...)
+		run("run", settingsToParams(i)...)
 	}
 }
 
@@ -127,12 +134,12 @@ func Kill() {
 
 func Console() {
 	cfg.StartCmd = cfg.Console
-	runInteractive("run", settingsToParams()...)
+	runInteractive("run", settingsToParams(0)...)
 }
 
 func Bash() {
 	cfg.StartCmd = "/bin/bash"
-	runInteractive("run", settingsToParams()...)
+	runInteractive("run", settingsToParams(0)...)
 }
 
 //func IP() {

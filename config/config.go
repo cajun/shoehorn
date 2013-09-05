@@ -42,7 +42,7 @@ var (
 )
 
 func init() {
-	const (
+	var (
 		globalConfig   = "$HOME/.shoehorn.cfg"
 		globalUsage    = "configuration file for this app"
 		defaultConfig  = "shoehorn.cfg"
