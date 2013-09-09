@@ -28,6 +28,7 @@ type Settings struct {
 	RemoteVolumn string
 	Raw          string
 	Dns          string
+	AutoStart    bool
 }
 
 type Config struct {
@@ -82,10 +83,6 @@ func setDefaults(cfg *Config) {
 			value.MB = value.GB * 1024
 		}
 
-		if value.MB == 0 && value.Bytes == 0 {
-			value.MB = 512
-		}
-
 		if value.Bytes == 0 {
 			value.Bytes = value.MB * 1024 * 1024
 		}
@@ -136,5 +133,5 @@ func PrintConfig(name string) {
 	printSetting("Volumn(s)", strings.Join(settings.Volumn, " "))
 	printSetting("Remote Volumn", settings.RemoteVolumn)
 	printSetting("Raw Command", settings.Raw)
-
+	printSetting("Auto Start", strconv.FormatBool(settings.AutoStart))
 }

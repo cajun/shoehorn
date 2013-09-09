@@ -7,57 +7,22 @@ import (
 	"github.com/cajun/shoehorn/config"
 )
 
-func isCommand(cmd string) bool {
-	for _, val := range []string{"start", "stop", "kill", "restart"} {
-		if val == cmd {
-			return true
-		}
-	}
-
-	return false
-}
-
 // handleParam takes in the given parameters and decides what to do with them.
 func handleParam(args []string) {
 	name := args[0]
 
 	if name == "list" {
 		config.PrintProcesses()
-	} else if isCommand(name) {
+	} else if command.IsCommand(name) {
 		for _, process := range config.List() {
-			handleCommand([]string{process, name})
+			command.ParseCommand([]string{process, name})
 		}
 	} else if config.Process(name) != nil && len(args) == 1 {
 		config.PrintConfig(name)
 	} else if config.Process(name) != nil && len(args) > 1 {
-		handleCommand(args)
+		command.ParseCommand(args)
 	} else {
 		fmt.Printf("Process Name: (%v) doesn't exists\n", name)
-	}
-}
-
-// handleCommand will take in the argument for the process and run it
-func handleCommand(args []string) {
-	command.SetProcess(args[0])
-	command.SetConfig(config.Process(args[0]))
-
-	switch args[1] {
-	case "start":
-		command.Start()
-	case "stop":
-		command.Stop()
-	case "restart":
-		command.Restart()
-	case "kill":
-		command.Kill()
-	case "bash":
-		command.Bash()
-	case "console":
-		command.Console()
-	case "params":
-		command.PrintParams()
-	default:
-		fmt.Printf("Running Command: (%v) doesn't exists\n", args[2])
 	}
 }
 
@@ -73,6 +38,6 @@ func main() {
 		handleParam(args)
 	} else {
 		flag.PrintDefaults()
+		command.PrintCommands()
 	}
-
 }
