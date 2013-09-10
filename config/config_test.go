@@ -24,21 +24,21 @@ func TestAppCount(t *testing.T) {
 }
 
 func TestGlobal(t *testing.T) {
-	actual := App("one").Kill
+	actual := Process("one").Kill
 	expected := false
 	// Assert whether a regular option was merged from source -> target
 	if actual != expected {
 		t.Errorf("'one' Kill command expected to be %s but instead it was '%d'", actual, expected)
 	}
 
-	actual = App("two").Kill
+	actual = Process("two").Kill
 	expected = true
 	// Assert whether a regular option was merged from source -> target
 	if actual != expected {
 		t.Errorf("'two' Kill command expected to be % but instead it was '%'", actual, expected)
 	}
 
-	actual = App("three").Kill
+	actual = Process("three").Kill
 	expected = false
 	// Assert whether a regular option was merged from source -> target
 	if actual != expected {
@@ -47,21 +47,21 @@ func TestGlobal(t *testing.T) {
 }
 
 func TestOverride(t *testing.T) {
-	actual := App("one").Port
+	actual := Process("one").Port
 	expected := 1111
 	// Assert whether a regular option was merged from source -> target
 	if actual != expected {
 		t.Errorf("'one' Port expected to be %d but instead it was '%d'", actual, expected)
 	}
 
-	actual = App("two").Port
+	actual = Process("two").Port
 	expected = 3000
 	// Assert whether a regular option was merged from source -> target
 	if actual != expected {
 		t.Errorf("'two' Port expected to be %d but instead it was '%d'", actual, expected)
 	}
 
-	actual = App("three").Port
+	actual = Process("three").Port
 	expected = 2
 	// Assert whether a regular option was merged from source -> target
 	if actual != expected {
