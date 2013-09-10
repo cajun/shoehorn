@@ -26,6 +26,7 @@ type Settings struct {
 	Container    string
 	Volumn       []string
 	RemoteVolumn string
+	QuotedOpts   string
 	Raw          string
 	Dns          string
 	AutoStart    bool

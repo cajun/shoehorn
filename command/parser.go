@@ -43,7 +43,7 @@ func SetProcess(proc string) {
 // PrintParams will print all of the settings that will be passed.
 // into docker It assumes the first instance                     .
 func PrintParams() {
-	fmt.Println(settingsToParams(0))
+	fmt.Println(settingsToParams(0, false))
 }
 
 // PrintCommands will list out all of the commands to the end user.
@@ -86,6 +86,11 @@ func ParseCommand(args []string) {
 	SetProcess(args[0])
 	SetConfig(config.Process(args[0]))
 
+	opts := []string{}
+	if len(args) >= 2 {
+		opts = args[2:len(args)]
+	}
+
 	switch args[1] {
 	case "running":
 		Running()
@@ -119,6 +124,16 @@ func ParseCommand(args []string) {
 		Status()
 	case "logs":
 		Logs()
+	case "ruby":
+		Ruby(opts...)
+	case "irb":
+		Irb(opts...)
+	case "rake":
+		Rake(opts...)
+	case "bundle":
+		Bundle(opts...)
+	case "bundle_install":
+		BundleInstall()
 	default:
 		fmt.Printf("Running Command: (%v) doesn't exists\n", args[2])
 	}

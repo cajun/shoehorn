@@ -25,9 +25,11 @@ func pidFileName(instance int) string {
 
 // settingsToParams converts the parameters in the configuration file
 // to params that will be passed into docker.
-func settingsToParams(instance int) (opts []string) {
+func settingsToParams(instance int, withPid bool) (opts []string) {
 
-	opts = append(opts, "-cidfile", pidFileName(instance))
+	if withPid {
+		opts = append(opts, "-cidfile", pidFileName(instance))
+	}
 
 	if cfg.Bytes != 0 {
 		opts = append(opts, limitOpts()...)
@@ -47,6 +49,7 @@ func settingsToParams(instance int) (opts []string) {
 
 	opts = append(opts, cfg.Container)
 	opts = append(opts, strings.Split(cfg.StartCmd, " ")...)
+	opts = append(opts, cfg.QuotedOpts)
 
 	return
 }

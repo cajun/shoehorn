@@ -8,46 +8,62 @@ import (
 	"strings"
 )
 
+var (
+	daemonizedCommands  map[string]string
+	infoCommands        map[string]string
+	interactiveCommands map[string]string
+)
+
+func init() {
+	if daemonizedCommands == nil {
+		daemonizedCommands = make(map[string]string)
+	}
+	if infoCommands == nil {
+		infoCommands = make(map[string]string)
+	}
+	if interactiveCommands == nil {
+		interactiveCommands = make(map[string]string)
+	}
+	daemonizedCommands["start"] = "start the given process"
+	daemonizedCommands["stop"] = "stop the given process"
+	daemonizedCommands["kill"] = "kill the given process"
+	daemonizedCommands["restart"] = "restrat the givne process"
+
+	infoCommands["running"] = "check to see if the process is running"
+	infoCommands["status"] = "view the status of the process"
+	infoCommands["ip"] = "view the private ip"
+	infoCommands["logs"] = "see logs for the process"
+	infoCommands["pids"] = "view the pids for theses processes"
+	infoCommands["port"] = "view the private port"
+	infoCommands["params"] = "view the params that will be used in the docker command"
+	infoCommands["public_port"] = "view the public port"
+
+	interactiveCommands["console"] = "execute the console command from the config"
+	interactiveCommands["bash"] = "execute a bash shell for the process"
+	interactiveCommands["ssh"] = "ssh into the container"
+}
+
 // DaemonizedCommands are commands that will be daemonized or manage daemonized
 // commands
 func DaemonizedCommands() map[string]string {
-	return map[string]string{
-		"start":   "start the given process",
-		"stop":    "stop the given process",
-		"kill":    "kill the given process",
-		"restart": "restrat the givne process",
-	}
+	return daemonizedCommands
 }
 
 // InfoCommands are commands the will pull out information about the
 // given process
 func InfoCommands() map[string]string {
-	return map[string]string{
-		"running":     "check to see if the process is running",
-		"status":      "view the status of the process",
-		"ip":          "view the private ip",
-		"logs":        "see logs for the process",
-		"pids":        "view the pids for theses processes",
-		"port":        "view the private port",
-		"params":      "view the params that will be used in the docker command",
-		"public_port": "view the public port",
-	}
-
+	return infoCommands
 }
 
 // InteractiveCommands will turn over some kind of command back to the user
 func InteractiveCommands() map[string]string {
-	return map[string]string{
-		"console": "execute the console command from the config",
-		"bash":    "execute a bash shell for the process",
-		"ssh":     "ssh into the container",
-	}
+	return interactiveCommands
 }
 
 // Start will run the standard start command
 func Start() {
 	runInstances("Start", func(i int, id string) error {
-		return runDaemon("run", settingsToParams(i)...)
+		return runDaemon("run", settingsToParams(i, true)...)
 	})
 }
 
@@ -82,13 +98,13 @@ func Kill() {
 // Console will run an interactive command for the given console command
 func Console() {
 	cfg.StartCmd = cfg.Console
-	runInteractive("run", settingsToParams(0)...)
+	runInteractive("run", settingsToParams(0, false)...)
 }
 
 // Bash will execute a bash command against the given container
 func Bash() {
 	cfg.StartCmd = "/bin/bash"
-	runInteractive("run", settingsToParams(0)...)
+	runInteractive("run", settingsToParams(0, false)...)
 }
 
 func IP() {
@@ -180,7 +196,7 @@ func run(command string, inOpts ...string) error {
 // runInteractive will give the user the option for input into the
 // docker command. examples would be running bash or ssh
 func runInteractive(command string, inOpts ...string) error {
-	base := []string{"run", "-i", "-t"}
+	base := []string{command, "-i", "-t"}
 	opts := append(base, inOpts...)
 	outOpts(opts)
 
@@ -195,7 +211,7 @@ func runInteractive(command string, inOpts ...string) error {
 // the run command.
 type runner func(instance int, pid string) error
 
-// runInteractive wraps the given function and execute
+// runInstances wraps the given function and execute
 // the number of instances requested by the config file
 // for the command given.
 func runInstances(message string, fn runner) {
@@ -208,4 +224,12 @@ func runInstances(message string, fn runner) {
 		}
 		fn(i, id)
 	}
+}
+
+func runExec(cmd string, args ...string) {
+	joined := strings.Join(args, " ")
+	cfg.StartCmd = "/bin/bash -c"
+	cfg.QuotedOpts = fmt.Sprintf("'cd %s && %s %s'", cfg.RemoteVolumn, cmd, joined)
+
+	runInteractive("run", settingsToParams(0, false)...)
 }
