@@ -114,7 +114,8 @@ func Port() int {
 	return cfg.Port
 }
 
-func PublicPort() {
+func PublicPort() int {
+	return 0
 }
 
 func Ssh() {

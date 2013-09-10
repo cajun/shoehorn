@@ -22,6 +22,7 @@ type Settings struct {
 	GB           int
 	Bytes        int
 	Domain       []string
+	Allow        []string
 	Kill         bool
 	Container    string
 	Volumn       []string
