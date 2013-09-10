@@ -6,14 +6,28 @@ import (
 
 func init() {
 	if interactiveCommands == nil {
-		interactiveCommands = make(map[string]string)
+		interactiveCommands = make(map[string]Executor)
 	}
 
-	interactiveCommands["irb"] = "open an irb session against this container (NOTE: may not have ruby)"
-	interactiveCommands["ruby"] = "execute ruby against this container"
-	interactiveCommands["rake"] = "execute rake against this container"
-	interactiveCommands["bundle"] = "execute bundle against this container"
-	interactiveCommands["bundle_install"] = "execute bundle install --path .gems against this container"
+	interactiveCommands["irb"] = Executor{
+		description: "open an irb session against this container (NOTE: may not have ruby)",
+		run:         Irb}
+
+	interactiveCommands["ruby"] = Executor{
+		description: "execute ruby against this container",
+		run:         Ruby}
+
+	interactiveCommands["rake"] = Executor{
+		description: "execute rake against this container",
+		run:         Rake}
+
+	interactiveCommands["bundle"] = Executor{
+		description: "execute bundle against this container",
+		run:         Bundle}
+
+	interactiveCommands["bundle_install"] = Executor{
+		description: "execute bundle install --path .gems against this container",
+		run:         BundleInstall}
 }
 
 func Irb(args ...string) {
@@ -32,6 +46,6 @@ func Bundle(args ...string) {
 	runExec("bundle", strings.Join(args, " "))
 }
 
-func BundleInstall() {
+func BundleInstall(args ...string) {
 	runExec("bundle install --path .gems", "")
 }

@@ -6,11 +6,16 @@ import (
 
 func init() {
 	if interactiveCommands == nil {
-		interactiveCommands = make(map[string]string)
+		interactiveCommands = make(map[string]Executor)
 	}
 
-	interactiveCommands["rails"] = "execute the rails command against this container"
-	interactiveCommands["assets"] = "build the assets for rails"
+	interactiveCommands["rails"] = Executor{
+		description: "execute the rails command against this container",
+		run:         Rails}
+
+	interactiveCommands["assets"] = Executor{
+		description: "build the assets for rails",
+		run:         Assets}
 }
 
 func Rails(args ...string) {

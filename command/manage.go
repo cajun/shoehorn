@@ -9,59 +9,85 @@ import (
 )
 
 var (
-	daemonizedCommands  map[string]string
-	infoCommands        map[string]string
-	interactiveCommands map[string]string
+	daemonizedCommands  map[string]Executor
+	infoCommands        map[string]Executor
+	interactiveCommands map[string]Executor
 )
 
 func init() {
 	if daemonizedCommands == nil {
-		daemonizedCommands = make(map[string]string)
+		daemonizedCommands = make(map[string]Executor)
 	}
 	if infoCommands == nil {
-		infoCommands = make(map[string]string)
+		infoCommands = make(map[string]Executor)
 	}
 	if interactiveCommands == nil {
-		interactiveCommands = make(map[string]string)
+		interactiveCommands = make(map[string]Executor)
 	}
-	daemonizedCommands["start"] = "start the given process"
-	daemonizedCommands["stop"] = "stop the given process"
-	daemonizedCommands["kill"] = "kill the given process"
-	daemonizedCommands["restart"] = "restrat the givne process"
 
-	infoCommands["running"] = "check to see if the process is running"
-	infoCommands["status"] = "view the status of the process"
-	infoCommands["ip"] = "view the private ip"
-	infoCommands["logs"] = "see logs for the process"
-	infoCommands["pids"] = "view the pids for theses processes"
-	infoCommands["port"] = "view the private port"
-	infoCommands["params"] = "view the params that will be used in the docker command"
-	infoCommands["public_port"] = "view the public port"
+	daemonizedCommands["start"] = Executor{
+		description: "start the given process",
+		run:         Start}
+	daemonizedCommands["stop"] = Executor{
+		description: "stop the given process",
+		run:         Stop}
+	daemonizedCommands["kill"] = Executor{
+		description: "kill the given process",
+		run:         Kill}
+	daemonizedCommands["restart"] = Executor{
+		description: "restrat the givne process",
+		run:         Restart}
 
-	interactiveCommands["console"] = "execute the console command from the config"
-	interactiveCommands["bash"] = "execute a bash shell for the process"
-	interactiveCommands["ssh"] = "ssh into the container"
+	infoCommands["status"] = Executor{
+		description: "view the status of the process",
+		run:         Status}
+	infoCommands["ip"] = Executor{
+		description: "view the private ip",
+		run:         IP}
+	infoCommands["logs"] = Executor{
+		description: "see logs for the process",
+		run:         Logs}
+	infoCommands["port"] = Executor{
+		description: "view the private port",
+		run:         Port}
+	infoCommands["params"] = Executor{
+		description: "view the params that will be used in the docker command",
+		run:         PrintParams}
+
+	infoCommands["public_port"] = Executor{
+		description: "view the public port",
+		run:         PublicPort}
+
+	interactiveCommands["console"] = Executor{
+		description: "execute the console command from the config",
+		run:         Console}
+	interactiveCommands["bash"] = Executor{
+		description: "execute a bash shell for the process",
+		run:         Bash}
+	interactiveCommands["ssh"] = Executor{
+		description: "ssh into the container",
+		run:         Ssh}
 }
 
 // DaemonizedCommands are commands that will be daemonized or manage daemonized
 // commands
-func DaemonizedCommands() map[string]string {
+func DaemonizedCommands() map[string]Executor {
 	return daemonizedCommands
 }
 
 // InfoCommands are commands the will pull out information about the
 // given process
-func InfoCommands() map[string]string {
+func InfoCommands() map[string]Executor {
 	return infoCommands
 }
 
 // InteractiveCommands will turn over some kind of command back to the user
-func InteractiveCommands() map[string]string {
+func InteractiveCommands() map[string]Executor {
 	return interactiveCommands
 }
 
 // Start will run the standard start command
-func Start() {
+func Start(args ...string) {
 	runInstances("Start", func(i int, id string) error {
 		return runDaemon("run", settingsToParams(i, true)...)
 	})
@@ -69,9 +95,9 @@ func Start() {
 
 // Stop will stop all the process if this type.  If the 'Kill' setting is turned
 // on then the stop will kill the process instead
-func Stop() {
+func Stop(args ...string) {
 	if cfg.Kill {
-		Kill()
+		Kill(args...)
 	} else {
 		runInstances("Stopping", func(i int, id string) error {
 			defer os.Remove(pidFileName(i))
@@ -81,14 +107,14 @@ func Stop() {
 }
 
 // Restart will call stop then start for this process
-func Restart() {
+func Restart(args ...string) {
 	fmt.Printf("Restarting %v\n", process)
-	Stop()
-	Start()
+	Stop(args...)
+	Start(args...)
 }
 
 // Kill will kill the given process
-func Kill() {
+func Kill(args ...string) {
 	runInstances("Killing", func(i int, id string) error {
 		defer os.Remove(pidFileName(i))
 		return run("kill", id)
@@ -96,33 +122,35 @@ func Kill() {
 }
 
 // Console will run an interactive command for the given console command
-func Console() {
+func Console(args ...string) {
 	cfg.StartCmd = cfg.Console
 	runInteractive("run", settingsToParams(0, false)...)
 }
 
 // Bash will execute a bash command against the given container
-func Bash() {
+func Bash(args ...string) {
 	cfg.StartCmd = "/bin/bash"
 	runInteractive("run", settingsToParams(0, false)...)
 }
 
-func IP() {
+func IP(args ...string) {
 }
 
-func Port() int {
-	return cfg.Port
+func Port(args ...string) {
 }
 
-func PublicPort() int {
-	return 0
+func publicPort() int {
+	return 1
 }
 
-func Ssh() {
+func PublicPort(args ...string) {
+}
+
+func Ssh(args ...string) {
 }
 
 // Running determines if the given process is running.
-func Running() (found bool) {
+func running(args ...string) (found bool) {
 	found = false
 	cmd := exec.Command("docker", "ps")
 
@@ -148,23 +176,25 @@ func Running() (found bool) {
 	fmt.Printf("%s\n", s)
 	cmd.Wait()
 
-	for _, id := range Pids() {
+	for _, id := range pids() {
 		if !found {
 			found = strings.Contains(s, id)
 		}
 	}
+
 	return
 }
 
 // Logs will print out all of the logs for each of the instances
-func Logs() {
+func Logs(args ...string) {
 	runInstances("Logs", func(i int, id string) error {
 		return run("log", id)
 	})
+
 }
 
 // Status will list out the statuses for the given process
-func Status() {
+func Status(args ...string) {
 	runInstances("Status", func(i int, id string) error {
 		return run("ps", id)
 	})
@@ -225,6 +255,7 @@ func runInstances(message string, fn runner) {
 		}
 		fn(i, id)
 	}
+
 }
 
 func runExec(cmd string, args ...string) {

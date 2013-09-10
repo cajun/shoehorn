@@ -27,6 +27,13 @@ func init() {
 	os.MkdirAll("config", os.ModeDir|0700)
 }
 
+type Runner func(...string)
+
+type Executor struct {
+	description string
+	run         Runner
+}
+
 // SetConfig will set an var for the settings for the given process
 // that will be executing.
 func SetConfig(settings *config.Settings) {
@@ -42,7 +49,7 @@ func SetProcess(proc string) {
 
 // PrintParams will print all of the settings that will be passed.
 // into docker It assumes the first instance                     .
-func PrintParams() {
+func PrintParams(args ...string) {
 	fmt.Println(settingsToParams(0, false))
 }
 
@@ -50,17 +57,17 @@ func PrintParams() {
 func PrintCommands() {
 	fmt.Println("** Daemonized Commands **")
 	for cmd, desc := range DaemonizedCommands() {
-		fmt.Printf("%15s: %s\n", cmd, desc)
+		fmt.Printf("%15s: %s\n", cmd, desc.description)
 	}
 
 	fmt.Println("** Information Commands **")
 	for cmd, desc := range InfoCommands() {
-		fmt.Printf("%15s: %s\n", cmd, desc)
+		fmt.Printf("%15s: %s\n", cmd, desc.description)
 	}
 
 	fmt.Println("** Interactive Commands **")
 	for cmd, desc := range InteractiveCommands() {
-		fmt.Printf("%15s: %s\n", cmd, desc)
+		fmt.Printf("%15s: %s\n", cmd, desc.description)
 	}
 }
 
@@ -91,56 +98,19 @@ func ParseCommand(args []string) {
 		opts = args[2:len(args)]
 	}
 
-	switch args[1] {
-	case "running":
-		Running()
-	case "pids":
-		for _, id := range Pids() {
-			fmt.Println(id)
-		}
-	case "start":
-		Start()
-	case "stop":
-		Stop()
-	case "restart":
-		Restart()
-	case "kill":
-		Kill()
-	case "bash":
-		Bash()
-	case "console":
-		Console()
-	case "params":
-		PrintParams()
-	case "ip":
-		IP()
-	case "port":
-		Port()
-	case "public_port":
-		PublicPort()
-	case "ssh":
-		Ssh()
-	case "status":
-		Status()
-	case "logs":
-		Logs()
-	case "ruby":
-		Ruby(opts...)
-	case "irb":
-		Irb(opts...)
-	case "rake":
-		Rake(opts...)
-	case "bundle":
-		Bundle(opts...)
-	case "bundle_install":
-		BundleInstall()
-	default:
+	if cmd, ok := DaemonizedCommands()[args[1]]; ok {
+		cmd.run(opts...)
+	} else if cmd, ok := InfoCommands()[args[1]]; ok {
+		cmd.run(opts...)
+	} else if cmd, ok := InteractiveCommands()[args[1]]; ok {
+		cmd.run(opts...)
+	} else {
 		fmt.Printf("Running Command: (%v) doesn't exists\n", args[2])
 	}
 }
 
 // Pids pulls all docker ids for each of the instances
-func Pids() (pids []string) {
+func pids(args ...string) (pids []string) {
 	for i := 0; i < cfg.Instances; i++ {
 		id, err := pid(i)
 
@@ -150,7 +120,7 @@ func Pids() (pids []string) {
 
 		pids = append(pids, id)
 	}
-	return
+	return pids
 }
 
 // pid pulls the docker pid for the given instance
