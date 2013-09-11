@@ -10,16 +10,36 @@ const js = `
 
 window.Shoehorn = angular.module( "Shoehorn", [ "ngResource" ] );
 
-Shoehorn.controller( 'ListCtrl', ['$scope', 'Site', 'Settings', function($scope, Site, Settings){
+Shoehorn.controller( 'ListCtrl', ['$scope', 'Site', 'Settings', 'Commands', function($scope, Site, Settings, Commands){
  $scope.message = "Angular Rocks!";
  $scope.sites = Site.query();
 
   $scope.selectedSite = null
   $scope.processes = null
+  $scope.commandResult = null
 
  $scope.showSite = function(site){
    $scope.selectedSite = site;
    $scope.processes = Settings.get({name: site.name});
+ }
+
+ $scope.start = function(process){
+   $scope.commandResult = { status: 'running', output: 'Staring...' }
+   $scope.commandResult = Commands.get({ site: $scope.selectedSite.name, name: process, command: 'start'   })
+ }
+
+ $scope.stop = function(process){
+   $scope.commandResult = { status: 'running', output: 'Stopping...' }
+   $scope.commandResult = Commands.get({ site: $scope.selectedSite.name, name: process, command: 'stop'   })
+ }
+
+ $scope.restart = function(process){
+   $scope.commandResult = { status: 'running', output: 'Restarting...' }
+   $scope.commandResult = Commands.get({ site: $scope.selectedSite.name, name: process, command: 'restart'   })
+ }
+ $scope.kill = function(process){
+   $scope.commandResult = { status: 'running', output: 'Killing...' }
+   $scope.commandResult = Commands.get({ site: $scope.selectedSite.name, name: process, command: 'kill'   })
  }
 
 }]);
@@ -29,8 +49,11 @@ Shoehorn.factory( 'Site', ['$resource', function($resource){
 }]);
 
 Shoehorn.factory( 'Settings', ['$resource', function($resource){
-  console.log('in setting');
   return $resource('/apps/json/:name',{name: '@name'});
+}]);
+
+Shoehorn.factory( 'Commands', ['$resource', function($resource){
+  return $resource('/commands/:site/:name/:command',{site: '@site', name: '@name', command: '@command'});
 }]);
 
 

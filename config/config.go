@@ -31,6 +31,7 @@ type Settings struct {
 	Raw          string
 	Dns          string
 	AutoStart    bool
+	UseNginx     bool
 }
 
 type Config struct {
@@ -62,6 +63,7 @@ func init() {
 
 func LoadConfigs() {
 	defer setDefaults(&cfg) // Load the defaults at the end of the function call
+	cfg = Config{}
 	gcfg.ReadFileInto(&cfg, globalFile)
 	gcfg.ReadFileInto(&cfg, configFile)
 	gcfg.ReadFileInto(&cfg, overrideFile)
@@ -75,6 +77,10 @@ func setDefaults(cfg *Config) {
 			path, _ := os.Getwd()
 			dir := filepath.Base(path)
 			value.App = dir + "_" + section
+		}
+
+		if value.Dns == "" {
+			value.Dns = "192.168.100.7"
 		}
 
 		if value.Instances == 0 {

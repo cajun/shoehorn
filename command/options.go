@@ -3,6 +3,7 @@ package command
 import (
 	"fmt"
 	"github.com/mgutz/ansi"
+	"os/user"
 	"strconv"
 	"strings"
 )
@@ -31,12 +32,19 @@ func settingsToParams(instance int, withPid bool) (opts []string) {
 		opts = append(opts, "-cidfile", pidFileName(instance))
 	}
 
+	opts = append(opts, "-e", "RACK_ENV=production")
+	opts = append(opts, "-e", "PHONE_LIST_USER=adquery")
+	opts = append(opts, "-e", "PHONE_LIST_PASSWORD=Th@brav3")
 	if cfg.Bytes != 0 {
 		opts = append(opts, limitOpts()...)
 	}
 
 	if cfg.Options != "" {
 		opts = append(opts, cfg.Options)
+	}
+
+	if cfg.Port != 0 {
+		opts = append(opts, portOpts()...)
 	}
 
 	if cfg.Dns != "" {
@@ -49,7 +57,7 @@ func settingsToParams(instance int, withPid bool) (opts []string) {
 
 	opts = append(opts, cfg.Container)
 	opts = append(opts, strings.Split(cfg.StartCmd, " ")...)
-	opts = append(opts, cfg.QuotedOpts)
+	opts = append(opts, fmt.Sprintf("'%s'", cfg.QuotedOpts))
 
 	return
 }
@@ -57,6 +65,10 @@ func settingsToParams(instance int, withPid bool) (opts []string) {
 // limitOpts converts the memory limits into docker settings
 func limitOpts() []string {
 	return []string{"-m", strconv.Itoa(cfg.Bytes)}
+}
+
+func portOpts() []string {
+	return []string{"-p", strconv.Itoa(cfg.Port)}
 }
 
 // dnsOpts converts the dns settings into docker settings
@@ -68,7 +80,9 @@ func dnsOpts() []string {
 // the volume setting
 func volumnsOpts() (volumns []string) {
 	for _, volumn := range cfg.Volumn {
-		volumns = append(volumns, "-v", volumn)
+		usr, _ := user.Current()
+		vol := strings.Replace(volumn, "~", usr.HomeDir, -1)
+		volumns = append(volumns, "-v", vol)
 	}
 	return volumns
 }

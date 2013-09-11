@@ -20,7 +20,11 @@ const index = `
         <script src="/js/application.js"></script>
     </head>
     <body ng-app='Shoehorn'>
-
+        <form action='/clone' method='post' >
+          <label for=repo>Git Repo</label>
+          <input type='text' name='repo'/>
+          <input type='submit' value='do it'/>
+        </form>
         <div ng-controller="ListCtrl" >
           <div id=site-list >
             <h1> Apps </h1>
@@ -29,15 +33,36 @@ const index = `
               <h3>{{site.name}}</h3>
               </li>
             </ul>
+            <h3 ng-show="commandResult">Output</h3>
+            <div>
+              <p ng-bind-html-unsafe="commandResult.output" ></p>
+            </div>
           </div>
 
           <div id="site-view-container" ng-show="selectedSite">
             <h2>{{selectedSite.name}}</h2>
-            <ul ng-repeat="process in processes">
-              <li>
-              <i>{{process.App}}</i>
-              </li>
-            </ul>
+            <div ng-repeat="process in processes">
+              <ul ng-repeat="(name,settings) in process">
+                <li>
+                  <h3>{{name}}</h3>
+                  <div>
+                    <b>Actions</b>
+                    <button ng-click=start(name)>Start</button>
+                    <button ng-click=stop(name)>Stop</button>
+                    <button ng-click=restart(name)>Restart</button>
+                    <button ng-click=kill(name)>Kill</button>
+                  </div>
+                  <div>
+                    Show Settings: <input type="checkbox" ng-model="checked"/>
+                  </div>
+                  <ul ng-repeat="(key,val) in settings" ng-show="checked">
+                    <li>
+                      <i>{{key}}: {{val}}</i>
+                    </li>
+                  </ul>
+                </li>
+              </ul>
+            </div>
           </div>
         </div>
 

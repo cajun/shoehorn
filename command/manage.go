@@ -2,6 +2,7 @@ package command
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"os"
 	"os/exec"
@@ -91,6 +92,10 @@ func Start(args ...string) {
 	runInstances("Start", func(i int, id string) error {
 		return runDaemon("run", settingsToParams(i, true)...)
 	})
+
+	if cfg.UseNginx {
+		UpdateNginxConf()
+	}
 }
 
 // Stop will stop all the process if this type.  If the 'Kill' setting is turned
@@ -144,9 +149,32 @@ func publicPort() int {
 }
 
 func PublicPort(args ...string) {
+	fmt.Println("Checking public port")
+	settings, _ := networkSettings(0)
+	for k, v := range settings {
+		fmt.Printf("%s: %s\n", k, v)
+	}
 }
 
 func Ssh(args ...string) {
+}
+
+func networkSettings(instance int) (setting map[string]interface{}, err error) {
+	settings, err := inspect(0)
+	return settings["NetworkSettings"].(map[string]interface{}), err
+}
+
+func inspect(instance int) (u map[string]interface{}, err error) {
+	id, err := pid(instance)
+	out, err := exec.Command("docker", "inspect", id).Output()
+	if err != nil {
+		return
+	}
+
+	all := []map[string]interface{}{}
+	err = json.Unmarshal(out, &all)
+	u = all[0]
+	return
 }
 
 // Running determines if the given process is running.

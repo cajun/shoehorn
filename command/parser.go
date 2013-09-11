@@ -22,6 +22,10 @@ var (
 // config   # This is the location of the nginx config
 //
 func init() {
+	MkDirs()
+}
+
+func MkDirs() {
 	os.MkdirAll("tmp/pids", os.ModeDir|0700)
 	os.MkdirAll("log", os.ModeDir|0700)
 	os.MkdirAll("config", os.ModeDir|0700)
