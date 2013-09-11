@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/cajun/shoehorn/command"
 	"github.com/cajun/shoehorn/config"
+	"github.com/cajun/shoehorn/server"
 )
 
 // handleParam takes in the given parameters and decides what to do with them.
@@ -34,7 +35,9 @@ func main() {
 
 	args := flag.Args()
 
-	if len(args) >= 1 {
+	if server.On() {
+		server.Up()
+	} else if len(args) >= 1 {
 		handleParam(args)
 	} else {
 		flag.PrintDefaults()

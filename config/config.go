@@ -100,6 +100,10 @@ func List() []string {
 	return list
 }
 
+func Processes() Config {
+	return cfg
+}
+
 // Process pulls the settings for the given process
 func Process(name string) *Settings {
 	return cfg.Process[name]
