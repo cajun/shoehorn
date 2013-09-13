@@ -32,9 +32,10 @@ func settingsToParams(instance int, withPid bool) (opts []string) {
 		opts = append(opts, "-cidfile", pidFileName(instance))
 	}
 
-	opts = append(opts, "-e", "RACK_ENV=production")
-	opts = append(opts, "-e", "PHONE_LIST_USER=adquery")
-	opts = append(opts, "-e", "PHONE_LIST_PASSWORD=Th@brav3")
+	for _, env := range cfg.Env {
+		opts = append(opts, "-e", env)
+	}
+
 	if cfg.Bytes != 0 {
 		opts = append(opts, limitOpts()...)
 	}

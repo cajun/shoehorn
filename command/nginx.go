@@ -28,7 +28,7 @@ func UpdateNginxConf() (err error) {
 	}
 
 	content = strings.Replace(content, "%PWD%", pwd, -1)
-	content = strings.Replace(content, "%PORT%", string(publicPort()), -1)
+	content = strings.Replace(content, "%PORT%", string(publicPort(0)[0].tcp), -1)
 	content = strings.Replace(content, "%DOMAINS%", strings.Join(cfg.Domain, " "), -1)
 	content = strings.Replace(content, "%ALLOW%", strings.Join(cfg.Allow, "\n"), -1)
 

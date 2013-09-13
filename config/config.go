@@ -32,6 +32,7 @@ type Settings struct {
 	Dns          string
 	AutoStart    bool
 	UseNginx     bool
+	Env          []string
 }
 
 type Config struct {

@@ -15,6 +15,11 @@ var (
 	interactiveCommands map[string]Executor
 )
 
+type Ports struct {
+	tcp string
+	udp string
+}
+
 func init() {
 	if daemonizedCommands == nil {
 		daemonizedCommands = make(map[string]Executor)
@@ -101,9 +106,10 @@ func Start(args ...string) {
 // Stop will stop all the process if this type.  If the 'Kill' setting is turned
 // on then the stop will kill the process instead
 func Stop(args ...string) {
-	if cfg.Kill {
+	switch {
+	case cfg.Kill:
 		Kill(args...)
-	} else {
+	default:
 		runInstances("Stopping", func(i int, id string) error {
 			defer os.Remove(pidFileName(i))
 			return run("stop", id)
@@ -144,16 +150,24 @@ func IP(args ...string) {
 func Port(args ...string) {
 }
 
-func publicPort() int {
-	return 1
+func publicPort(instance int) (ports []Ports) {
+
+	settings, _ := networkSettings(0)
+	fmt.Printf("%v\n", settings)
+	if settings["PortMapping"] != nil {
+		ports = settings["PortMapping"].([]Ports)
+		for _, port := range ports {
+			fmt.Printf("TCP: %s\n", port.tcp)
+			fmt.Printf("UDP: %s\n", port.udp)
+		}
+
+	}
+	return ports
 }
 
 func PublicPort(args ...string) {
 	fmt.Println("Checking public port")
-	settings, _ := networkSettings(0)
-	for k, v := range settings {
-		fmt.Printf("%s: %s\n", k, v)
-	}
+	fmt.Printf("Public Port: %d\n", publicPort(0))
 }
 
 func Ssh(args ...string) {

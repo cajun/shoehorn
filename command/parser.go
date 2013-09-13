@@ -92,25 +92,36 @@ func IsCommand(cmd string) bool {
 	return false
 }
 
-// handleCommand will take in the argument for the process and run it
-func ParseCommand(args []string) {
-	SetProcess(args[0])
-	SetConfig(config.Process(args[0]))
-
-	opts := []string{}
+func commandOpts(args []string) (opts []string) {
 	if len(args) >= 2 {
 		opts = args[2:len(args)]
 	}
 
-	if cmd, ok := DaemonizedCommands()[args[1]]; ok {
-		cmd.run(opts...)
-	} else if cmd, ok := InfoCommands()[args[1]]; ok {
-		cmd.run(opts...)
-	} else if cmd, ok := InteractiveCommands()[args[1]]; ok {
-		cmd.run(opts...)
-	} else {
+	return
+}
+
+// handleCommand will take in the argument for the process and run it
+func ParseCommand(args []string) {
+	SetProcess(args[0])
+	SetConfig(config.Process(args[0]))
+	opts := commandOpts(args)
+
+	name := args[1]
+	daemonCmd, daemonOk := DaemonizedCommands()[name]
+	infoCmd, infoOk := InfoCommands()[name]
+	interactiveCmd, interactiveOk := InteractiveCommands()[name]
+
+	switch {
+	case daemonOk:
+		daemonCmd.run(opts...)
+	case infoOk:
+		infoCmd.run(opts...)
+	case interactiveOk:
+		interactiveCmd.run(opts...)
+	default:
 		fmt.Printf("Running Command: (%v) doesn't exists\n", args[2])
 	}
+
 }
 
 // Pids pulls all docker ids for each of the instances
@@ -120,9 +131,10 @@ func pids(args ...string) (pids []string) {
 
 		if err != nil {
 			fmt.Println(err)
+		} else {
+			pids = append(pids, id)
 		}
 
-		pids = append(pids, id)
 	}
 	return pids
 }
@@ -131,8 +143,9 @@ func pids(args ...string) (pids []string) {
 func pid(instance int) (pid string, err error) {
 	file, err := os.Open(pidFileName(instance))
 	if err != nil {
-		return "", err
+		return
 	}
+
 	defer file.Close()
 
 	scanner := bufio.NewScanner(file)
