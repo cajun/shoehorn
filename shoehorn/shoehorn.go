@@ -31,12 +31,11 @@ func handleParam(args []string) {
 }
 
 func doIt(args []string) {
-
+	defer logger.Done()
 	if server.On() {
 		server.Up()
 	} else if len(args) >= 1 {
 		handleParam(args)
-		logger.Done()
 	} else {
 		flag.PrintDefaults()
 		command.PrintCommands()

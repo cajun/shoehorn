@@ -35,6 +35,6 @@ func Write(status Status) {
 	if serverOn {
 		// do server stuff
 	} else {
-		fmt.Println(status.Message)
+		fmt.Printf(status.Message)
 	}
 }
