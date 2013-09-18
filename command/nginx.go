@@ -8,32 +8,44 @@ import (
 	"strings"
 )
 
-func UpdateNginxConf() (err error) {
-	fmt.Println("In conf")
+// template is template that will be used for the nginx configuration.
+// It will look for a file named "config/nginx.template.conf".  If the file
+// doesn't exists then it will dup a default configuration in that location.
+func template() string {
 	bytes, err := ioutil.ReadFile("config/nginx.template.conf")
 	if err != nil {
 		fmt.Println(err)
-		return
+		return ""
 	}
 
 	content := string(bytes)
+	return content
+}
 
-	fmt.Println(content)
-	content = strings.Replace(content, "%APP%", cfg.App, -1)
+// UpdateNginxConf will replace vars in the 'config/nginx.template.conf' file.
+// It will replace the following vars
+//
+// * %APP% -> shoehorn.cfg#App
+// * %PWD% -> current working dir
+// * %DOMAINS% -> shoehorn.cfg#Domains
+// * %ALLOW% -> shoehorn.cfg#Allow
+//
+// Then it will attempt to reload nginx configuration.
+// NOTE: this is done via a sudo command.
+func UpdateNginxConf() (err error) {
+	content := template()
+
 	pwd, err := os.Getwd()
 
 	if err != nil {
-		fmt.Println(err)
 		return
 	}
 
+	content = strings.Replace(content, "%APP%", cfg.App, -1)
 	content = strings.Replace(content, "%PWD%", pwd, -1)
 	content = strings.Replace(content, "%PORT%", string(publicPort(0)[0].tcp), -1)
 	content = strings.Replace(content, "%DOMAINS%", strings.Join(cfg.Domain, " "), -1)
 	content = strings.Replace(content, "%ALLOW%", strings.Join(cfg.Allow, "\n"), -1)
-
-	fmt.Println("NGINX Configuration")
-	fmt.Println(content)
 
 	ioutil.WriteFile("config/nginx.conf", []byte(content), 0644)
 
