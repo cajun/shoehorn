@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"github.com/cajun/shoehorn/command"
 	"github.com/cajun/shoehorn/config"
+	"github.com/cajun/shoehorn/logger"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -78,10 +79,10 @@ func listHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func commandHandler(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("Command Handler")
+	logger.Log(fmt.Sprintln("Command Handler"))
 	base := r.URL.Path[len("/commands/"):]
 	opts := strings.Split(base, "/")
-	fmt.Printf("Commands: %v", opts)
+	logger.Log(fmt.Sprintf("Commands: %v", opts))
 	site := opts[0]
 	process := opts[1]
 	cmd := opts[2]
@@ -146,6 +147,7 @@ func makeHandler(fn func(http.ResponseWriter, *http.Request, string)) http.Handl
 		fn(w, r, title)
 	}
 }
+
 func Up() {
 	http.HandleFunc("/clone", cloneHandler)
 	http.HandleFunc("/commands/", commandHandler)
@@ -156,5 +158,6 @@ func Up() {
 	http.HandleFunc("/", indexHandler)
 	fmt.Printf("Server up on port 9369\n")
 	fmt.Printf("Root: %s\n", command.Root())
+
 	http.ListenAndServe(":9369", nil)
 }

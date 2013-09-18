@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
+	"github.com/cajun/shoehorn/logger"
 	"os"
 	"os/exec"
 	"strings"
@@ -153,7 +154,7 @@ func Stop(args ...string) {
 
 // Restart will call stop then start for this process
 func Restart(args ...string) {
-	fmt.Printf("Restarting %v\n", process)
+	logger.Log(fmt.Sprintf("Restarting %v\n", process))
 	Stop(args...)
 	Start(args...)
 }
@@ -203,8 +204,8 @@ func Install(args ...string) {
 }
 
 func IP(args ...string) {
-	fmt.Println("Checking ip address")
-	fmt.Printf("IP: %s\n", ip(0))
+	logger.Log(fmt.Sprintln("Checking ip address"))
+	logger.Log(fmt.Sprintf("IP: %s\n", ip(0)))
 }
 
 func ip(instance int) string {
@@ -213,8 +214,8 @@ func ip(instance int) string {
 }
 
 func Port(args ...string) {
-	fmt.Println("Checking private port")
-	fmt.Printf("Private Port: %d\n", cfg.Port)
+	logger.Log(fmt.Sprintln("Checking private port"))
+	logger.Log(fmt.Sprintf("Private Port: %d\n", cfg.Port))
 }
 
 func publicPort(instance int) (ports Ports) {
@@ -264,8 +265,8 @@ func privatePort(instance int) (ports Ports) {
 }
 
 func PublicPort(args ...string) {
-	fmt.Println("Checking public port")
-	fmt.Printf("Public Port: %d\n", publicPort(0))
+	logger.Log(fmt.Sprintln("Checking public port"))
+	logger.Log(fmt.Sprintf("Public Port: %d\n", publicPort(0)))
 }
 
 func Ssh(args ...string) {
@@ -298,17 +299,17 @@ func running(args ...string) (found bool) {
 
 	stdout, err := cmd.StdoutPipe()
 	if err != nil {
-		fmt.Println(err)
+		logger.Log(fmt.Sprintln(err))
 	}
 
 	_, err = cmd.StderrPipe()
 	if err != nil {
-		fmt.Println(err)
+		logger.Log(fmt.Sprintln(err))
 	}
 
 	err = cmd.Start()
 	if err != nil {
-		fmt.Println(err)
+		logger.Log(fmt.Sprintln(err))
 	}
 
 	buf := new(bytes.Buffer)
@@ -387,12 +388,12 @@ type runner func(instance int, pid string) error
 // the number of instances requested by the config file
 // for the command given.
 func runInstances(message string, fn runner) {
-	fmt.Printf("%s %v\n", message, process)
+	logger.Log(fmt.Sprintf("%s %v\n", message, process))
 	for i := 0; i < cfg.Instances; i++ {
-		fmt.Printf("...Instance %d of %d %s\n", i, cfg.Instances, process)
+		logger.Log(fmt.Sprintf("...Instance %d of %d %s\n", i, cfg.Instances, process))
 		id, err := pid(i)
 		if err != nil {
-			fmt.Println(err)
+			logger.Log(fmt.Sprintln(err))
 		}
 		fn(i, id)
 	}

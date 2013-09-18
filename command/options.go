@@ -3,6 +3,7 @@ package command
 import (
 	"fmt"
 	"github.com/cajun/shoehorn/config"
+	"github.com/cajun/shoehorn/logger"
 	"github.com/mgutz/ansi"
 	"os"
 	"os/user"
@@ -16,9 +17,9 @@ func outOpts(opts []string) {
 	lime := ansi.ColorCode("green:black")
 	reset := ansi.ColorCode("reset")
 	msg := lime + "docker %s" + reset + "\n"
-	fmt.Println(" ")
-	fmt.Printf(msg, strings.Join(opts, " "))
-	fmt.Println(" ")
+	logger.Log(fmt.Sprintln(" "))
+	logger.Log(fmt.Sprintf(msg, strings.Join(opts, " ")))
+	logger.Log(fmt.Sprintln(" "))
 }
 
 // pidFileName returns the path of the pid file
