@@ -11,19 +11,16 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
-	"os/exec"
 	"regexp"
 	"strings"
 )
 
 var (
 	serverOn = false
-	root     = "."
 )
 
 func init() {
 	flag.BoolVar(&serverOn, "server", false, "set true to run server")
-	flag.StringVar(&root, "root", ".", "which dir at the apps located")
 }
 
 func On() bool {
@@ -43,7 +40,7 @@ func jsHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func appHandler(w http.ResponseWriter, r *http.Request, app string) {
-	path := fmt.Sprintf("%s/%s", root, app)
+	path := fmt.Sprintf("%s/%s", command.Root(), app)
 	os.Chdir(path)
 	config.LoadConfigs()
 
@@ -58,7 +55,7 @@ func appHandler(w http.ResponseWriter, r *http.Request, app string) {
 
 func listHandler(w http.ResponseWriter, r *http.Request) {
 	// find apps and list
-	files, err := ioutil.ReadDir(root)
+	files, err := ioutil.ReadDir(command.Root())
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
@@ -66,7 +63,7 @@ func listHandler(w http.ResponseWriter, r *http.Request) {
 	dirs := []map[string]string{}
 	for _, file := range files {
 		if file.IsDir() {
-			path := fmt.Sprintf("%s/%s/shoehorn.cfg", root, file.Name())
+			path := fmt.Sprintf("%s/%s/shoehorn.cfg", command.Root(), file.Name())
 			if _, err := os.Stat(path); !os.IsNotExist(err) {
 				dirs = append(dirs, map[string]string{"name": file.Name()})
 			}
@@ -88,7 +85,7 @@ func commandHandler(w http.ResponseWriter, r *http.Request) {
 	site := opts[0]
 	process := opts[1]
 	cmd := opts[2]
-	path := fmt.Sprintf("%s/%s", root, site)
+	path := fmt.Sprintf("%s/%s", command.Root(), site)
 
 	os.Chdir(path)
 	command.MkDirs()
@@ -124,14 +121,7 @@ func commandHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func cloneHandler(w http.ResponseWriter, r *http.Request) {
-	repo := r.FormValue("repo")
-	os.Chdir(root)
-	opts := []string{"clone", repo}
-
-	cmd := exec.Command("git", opts...)
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	cmd.Run()
+	command.Install(r.FormValue("repo"))
 	http.Redirect(w, r, "/", http.StatusFound)
 }
 
@@ -165,6 +155,6 @@ func Up() {
 	http.HandleFunc("/js/application.js", jsHandler)
 	http.HandleFunc("/", indexHandler)
 	fmt.Printf("Server up on port 9369\n")
-	fmt.Printf("Root: %s\n", root)
+	fmt.Printf("Root: %s\n", command.Root())
 	http.ListenAndServe(":9369", nil)
 }

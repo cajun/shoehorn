@@ -3,6 +3,7 @@ package command
 import (
 	"bytes"
 	"encoding/json"
+	"flag"
 	"fmt"
 	"os"
 	"os/exec"
@@ -11,6 +12,7 @@ import (
 
 var (
 	available Available
+	root      = "."
 )
 
 type Ports struct {
@@ -22,6 +24,10 @@ type Available struct {
 	daemonized  map[string]Executor
 	info        map[string]Executor
 	interactive map[string]Executor
+}
+
+func Root() string {
+	return root
 }
 
 func (a *Available) addDaemon(name string, exe Executor) {
@@ -46,6 +52,8 @@ func (a *Available) addInteractive(name string, exe Executor) {
 }
 
 func init() {
+	flag.StringVar(&root, "root", ".", "which dir at the apps located")
+
 	available.addDaemon("start", Executor{
 		description: "start the given process",
 		run:         Start})
@@ -78,6 +86,9 @@ func init() {
 		description: "view the public port",
 		run:         PublicPort})
 
+	available.addInteractive("build", Executor{
+		description: "build a container from a file or url",
+		run:         Build})
 	available.addInteractive("console", Executor{
 		description: "execute the console command from the config",
 		run:         Console})
@@ -104,6 +115,15 @@ func InfoCommands() map[string]Executor {
 // InteractiveCommands will turn over some kind of command back to the user
 func InteractiveCommands() map[string]Executor {
 	return available.interactive
+}
+
+// Build will create the container if nessary
+func Build(args ...string) {
+	cmd := exec.Command("docker", "-t", cfg.Container, cfg.BuildFile)
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	cmd.Stdin = os.Stdin
+	cmd.Run()
 }
 
 // Start will run the standard start command
@@ -148,7 +168,8 @@ func Kill(args ...string) {
 
 // Console will run an interactive command for the given console command
 func Console(args ...string) {
-	cfg.StartCmd = cfg.Console
+	cfg.StartCmd = "/bin/bash -c"
+	cfg.QuotedOpts = "'" + cfg.Console + "'"
 	runInteractive("run", settingsToParams(0, false)...)
 }
 
@@ -158,21 +179,84 @@ func Bash(args ...string) {
 	runInteractive("run", settingsToParams(0, false)...)
 }
 
+func Install(args ...string) {
+	status := make(chan string)
+
+	go func() {
+		os.Chdir(root)
+		opts := []string{"clone", args[0]}
+
+		status <- "Cloning " + args[0]
+		cmd := exec.Command("git", opts...)
+		cmd.Stdout = os.Stdout
+		cmd.Stderr = os.Stderr
+		cmd.Run()
+
+		parts := strings.Split(args[0], "/")
+		path := parts[len(parts):][0]
+		status <- "Building Images here: " + path
+		os.Chdir(path)
+		Build(path)
+
+	}()
+
+}
+
 func IP(args ...string) {
+	fmt.Println("Checking ip address")
+	fmt.Printf("IP: %s\n", ip(0))
+}
+
+func ip(instance int) string {
+	settings, _ := networkSettings(instance)
+	return settings["IPAddress"].(string)
 }
 
 func Port(args ...string) {
+	fmt.Println("Checking private port")
+	fmt.Printf("Private Port: %d\n", cfg.Port)
 }
 
-func publicPort(instance int) (ports []Ports) {
+func publicPort(instance int) (ports Ports) {
 
-	settings, _ := networkSettings(0)
-	fmt.Printf("%v\n", settings)
+	settings, _ := networkSettings(instance)
 	if settings["PortMapping"] != nil {
-		ports = settings["PortMapping"].([]Ports)
-		for _, port := range ports {
-			fmt.Printf("TCP: %s\n", port.tcp)
-			fmt.Printf("UDP: %s\n", port.udp)
+		s := settings["PortMapping"].(map[string]interface{})
+
+		if s["Tcp"] != nil {
+			for _, public := range s["Tcp"].(map[string]interface{}) {
+				ports.tcp = public.(string)
+			}
+
+		}
+
+		if s["Udp"] != nil {
+			for _, public := range s["Udp"].(map[string]interface{}) {
+				ports.udp = public.(string)
+			}
+		}
+
+	}
+	return ports
+}
+
+func privatePort(instance int) (ports Ports) {
+
+	settings, _ := networkSettings(instance)
+	if settings["PortMapping"] != nil {
+		s := settings["PortMapping"].(map[string]interface{})
+
+		if s["Tcp"] != nil {
+			for private, _ := range s["Tcp"].(map[string]interface{}) {
+				ports.tcp = private
+			}
+
+		}
+
+		if s["Udp"] != nil {
+			for private, _ := range s["Udp"].(map[string]interface{}) {
+				ports.udp = private
+			}
 		}
 
 	}
@@ -201,7 +285,9 @@ func inspect(instance int) (u map[string]interface{}, err error) {
 
 	all := []map[string]interface{}{}
 	err = json.Unmarshal(out, &all)
-	u = all[0]
+	if len(all) > 0 {
+		u = all[0]
+	}
 	return
 }
 
@@ -229,7 +315,6 @@ func running(args ...string) (found bool) {
 	buf.ReadFrom(stdout)
 	s := buf.String()
 
-	fmt.Printf("%s\n", s)
 	cmd.Wait()
 
 	for _, id := range pids() {
@@ -318,9 +403,6 @@ func runExec(cmd string, args ...string) {
 	joined := strings.Join(args, " ")
 	cfg.StartCmd = "/bin/bash -c"
 	dir := ""
-	if cfg.WorkingDir != "" {
-		dir = fmt.Sprintf("cd %s && ", cfg.WorkingDir)
-	}
 	cfg.QuotedOpts = fmt.Sprintf("'%s %s'", dir, cmd, joined)
 
 	runInteractive("run", settingsToParams(0, false)...)

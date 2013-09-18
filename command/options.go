@@ -2,6 +2,7 @@ package command
 
 import (
 	"fmt"
+	"github.com/cajun/shoehorn/config"
 	"github.com/mgutz/ansi"
 	"os"
 	"os/user"
@@ -37,8 +38,8 @@ func settingsToParams(instance int, withPid bool) (opts []string) {
 		opts = append(opts, "-w", cfg.WorkingDir)
 	}
 
-	for _, env := range cfg.Env {
-		opts = append(opts, "-e", env)
+	if env := envOpts(); len(env) != 0 {
+		opts = append(opts, env...)
 	}
 
 	if cfg.Bytes != 0 {
@@ -57,8 +58,8 @@ func settingsToParams(instance int, withPid bool) (opts []string) {
 		opts = append(opts, dnsOpts()...)
 	}
 
-	if len(volumnsOpts()) != 0 {
-		opts = append(opts, volumnsOpts()...)
+	if vols := volumnsOpts(); len(vols) != 0 {
+		opts = append(opts, vols...)
 	}
 
 	opts = append(opts, cfg.Container)
@@ -91,8 +92,38 @@ func volumnsOpts() (volumns []string) {
 		usr, _ := user.Current()
 		vol := strings.Replace(volumn, "~", usr.HomeDir, -1)
 		path, _ := os.Getwd()
-		vol = strings.Replace(vol, ".", path, -1)
+		vol = strings.Replace(vol, ".", path, 1)
 		volumns = append(volumns, "-v", vol)
 	}
 	return volumns
+}
+
+func envOpts() (opts []string) {
+	for _, env := range cfg.Env {
+		opts = append(opts, "-e", env)
+	}
+
+	old_cfg := cfg
+	old_process := process
+
+	for _, process := range config.List() {
+		settings := config.Process(process)
+		if settings.IncludeEnv {
+			SetProcess(process)
+			SetConfig(config.Process(process))
+
+			for i := 0; i < cfg.Instances; i++ {
+				if running() {
+					name := fmt.Sprintf("%s_%d_IP=%s", process, i, ip(i))
+					opts = append(opts, "-e", strings.ToUpper(name))
+					name = fmt.Sprintf("%s_%d_PORT=%s", process, i, privatePort(i).tcp)
+					opts = append(opts, "-e", strings.ToUpper(name))
+				}
+			}
+		}
+	}
+
+	cfg = old_cfg
+	process = old_process
+	return
 }

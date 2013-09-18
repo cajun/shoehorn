@@ -28,11 +28,12 @@ type Settings struct {
 	Volumn     []string
 	WorkingDir string
 	QuotedOpts string
-	Raw        string
+	BuildFile  string
 	Dns        string
 	AutoStart  bool
 	UseNginx   bool
 	Env        []string
+	IncludeEnv bool
 }
 
 type Config struct {
@@ -141,6 +142,6 @@ func PrintConfig(name string) {
 	printSetting("Container Name", settings.Container)
 	printSetting("Volumn(s)", strings.Join(settings.Volumn, " "))
 	printSetting("Working Directory", settings.WorkingDir)
-	printSetting("Raw Command", settings.Raw)
+	printSetting("Build File", settings.BuildFile)
 	printSetting("Auto Start", strconv.FormatBool(settings.AutoStart))
 }
