@@ -5,17 +5,14 @@ import (
 )
 
 func init() {
-	if interactiveCommands == nil {
-		interactiveCommands = make(map[string]Executor)
-	}
 
-	interactiveCommands["rails"] = Executor{
+	available.addInteractive("rails", Executor{
 		description: "execute the rails command against this container",
-		run:         Rails}
+		run:         Rails})
 
-	interactiveCommands["assets"] = Executor{
+	available.addInteractive("assets", Executor{
 		description: "build the assets for rails",
-		run:         Assets}
+		run:         Assets})
 }
 
 func Rails(args ...string) {

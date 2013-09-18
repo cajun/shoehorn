@@ -3,6 +3,7 @@ package command
 import (
 	"fmt"
 	"github.com/mgutz/ansi"
+	"os"
 	"os/user"
 	"strconv"
 	"strings"
@@ -32,6 +33,10 @@ func settingsToParams(instance int, withPid bool) (opts []string) {
 		opts = append(opts, "-cidfile", pidFileName(instance))
 	}
 
+	if cfg.WorkingDir != "" {
+		opts = append(opts, "-w", cfg.WorkingDir)
+	}
+
 	for _, env := range cfg.Env {
 		opts = append(opts, "-e", env)
 	}
@@ -58,7 +63,9 @@ func settingsToParams(instance int, withPid bool) (opts []string) {
 
 	opts = append(opts, cfg.Container)
 	opts = append(opts, strings.Split(cfg.StartCmd, " ")...)
-	opts = append(opts, fmt.Sprintf("'%s'", cfg.QuotedOpts))
+	if cfg.QuotedOpts != "" {
+		opts = append(opts, fmt.Sprintf("'%s'", cfg.QuotedOpts))
+	}
 
 	return
 }
@@ -83,6 +90,8 @@ func volumnsOpts() (volumns []string) {
 	for _, volumn := range cfg.Volumn {
 		usr, _ := user.Current()
 		vol := strings.Replace(volumn, "~", usr.HomeDir, -1)
+		path, _ := os.Getwd()
+		vol = strings.Replace(vol, ".", path, -1)
 		volumns = append(volumns, "-v", vol)
 	}
 	return volumns

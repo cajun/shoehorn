@@ -10,9 +10,7 @@ import (
 )
 
 var (
-	daemonizedCommands  map[string]Executor
-	infoCommands        map[string]Executor
-	interactiveCommands map[string]Executor
+	available Available
 )
 
 type Ports struct {
@@ -20,76 +18,92 @@ type Ports struct {
 	udp string
 }
 
+type Available struct {
+	daemonized  map[string]Executor
+	info        map[string]Executor
+	interactive map[string]Executor
+}
+
+func (a *Available) addDaemon(name string, exe Executor) {
+	if a.daemonized == nil {
+		a.daemonized = make(map[string]Executor)
+	}
+	a.daemonized[name] = exe
+}
+
+func (a *Available) addInfo(name string, exe Executor) {
+	if a.info == nil {
+		a.info = make(map[string]Executor)
+	}
+	a.info[name] = exe
+}
+
+func (a *Available) addInteractive(name string, exe Executor) {
+	if a.interactive == nil {
+		a.interactive = make(map[string]Executor)
+	}
+	a.interactive[name] = exe
+}
+
 func init() {
-	if daemonizedCommands == nil {
-		daemonizedCommands = make(map[string]Executor)
-	}
-	if infoCommands == nil {
-		infoCommands = make(map[string]Executor)
-	}
-	if interactiveCommands == nil {
-		interactiveCommands = make(map[string]Executor)
-	}
-
-	daemonizedCommands["start"] = Executor{
+	available.addDaemon("start", Executor{
 		description: "start the given process",
-		run:         Start}
-	daemonizedCommands["stop"] = Executor{
+		run:         Start})
+	available.addDaemon("stop", Executor{
 		description: "stop the given process",
-		run:         Stop}
-	daemonizedCommands["kill"] = Executor{
+		run:         Stop})
+	available.addDaemon("kill", Executor{
 		description: "kill the given process",
-		run:         Kill}
-	daemonizedCommands["restart"] = Executor{
+		run:         Kill})
+	available.addDaemon("restart", Executor{
 		description: "restrat the givne process",
-		run:         Restart}
+		run:         Restart})
 
-	infoCommands["status"] = Executor{
+	available.addInfo("status", Executor{
 		description: "view the status of the process",
-		run:         Status}
-	infoCommands["ip"] = Executor{
+		run:         Status})
+	available.addInfo("ip", Executor{
 		description: "view the private ip",
-		run:         IP}
-	infoCommands["logs"] = Executor{
+		run:         IP})
+	available.addInfo("logs", Executor{
 		description: "see logs for the process",
-		run:         Logs}
-	infoCommands["port"] = Executor{
+		run:         Logs})
+	available.addInfo("port", Executor{
 		description: "view the private port",
-		run:         Port}
-	infoCommands["params"] = Executor{
+		run:         Port})
+	available.addInfo("params", Executor{
 		description: "view the params that will be used in the docker command",
-		run:         PrintParams}
-
-	infoCommands["public_port"] = Executor{
+		run:         PrintParams})
+	available.addInfo("public_port", Executor{
 		description: "view the public port",
-		run:         PublicPort}
+		run:         PublicPort})
 
-	interactiveCommands["console"] = Executor{
+	available.addInteractive("console", Executor{
 		description: "execute the console command from the config",
-		run:         Console}
-	interactiveCommands["bash"] = Executor{
+		run:         Console})
+	available.addInteractive("bash", Executor{
 		description: "execute a bash shell for the process",
-		run:         Bash}
-	interactiveCommands["ssh"] = Executor{
+		run:         Bash})
+	available.addInteractive("ssh", Executor{
 		description: "ssh into the container",
-		run:         Ssh}
+		run:         Ssh})
 }
 
 // DaemonizedCommands are commands that will be daemonized or manage daemonized
 // commands
 func DaemonizedCommands() map[string]Executor {
-	return daemonizedCommands
+	return available.daemonized
 }
 
 // InfoCommands are commands the will pull out information about the
 // given process
 func InfoCommands() map[string]Executor {
-	return infoCommands
+	return available.info
 }
 
 // InteractiveCommands will turn over some kind of command back to the user
 func InteractiveCommands() map[string]Executor {
-	return interactiveCommands
+	return available.interactive
 }
 
 // Start will run the standard start command
@@ -303,7 +317,11 @@ func runInstances(message string, fn runner) {
 func runExec(cmd string, args ...string) {
 	joined := strings.Join(args, " ")
 	cfg.StartCmd = "/bin/bash -c"
-	cfg.QuotedOpts = fmt.Sprintf("'cd %s && %s %s'", cfg.RemoteVolumn, cmd, joined)
+	dir := ""
+	if cfg.WorkingDir != "" {
+		dir = fmt.Sprintf("cd %s && ", cfg.WorkingDir)
+	}
+	cfg.QuotedOpts = fmt.Sprintf("'%s %s'", dir, cmd, joined)
 
 	runInteractive("run", settingsToParams(0, false)...)
 }

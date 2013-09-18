@@ -11,28 +11,28 @@ import (
 )
 
 type Settings struct {
-	App          string
-	StartCmd     string
-	Console      string
-	Options      string
-	Instances    int
-	Port         int
-	PublicPort   int
-	MB           int
-	GB           int
-	Bytes        int
-	Domain       []string
-	Allow        []string
-	Kill         bool
-	Container    string
-	Volumn       []string
-	RemoteVolumn string
-	QuotedOpts   string
-	Raw          string
-	Dns          string
-	AutoStart    bool
-	UseNginx     bool
-	Env          []string
+	App        string
+	StartCmd   string
+	Console    string
+	Options    string
+	Instances  int
+	Port       int
+	PublicPort int
+	MB         int
+	GB         int
+	Bytes      int
+	Domain     []string
+	Allow      []string
+	Kill       bool
+	Container  string
+	Volumn     []string
+	WorkingDir string
+	QuotedOpts string
+	Raw        string
+	Dns        string
+	AutoStart  bool
+	UseNginx   bool
+	Env        []string
 }
 
 type Config struct {
@@ -78,10 +78,6 @@ func setDefaults(cfg *Config) {
 			path, _ := os.Getwd()
 			dir := filepath.Base(path)
 			value.App = dir + "_" + section
-		}
-
-		if value.Dns == "" {
-			value.Dns = "192.168.100.7"
 		}
 
 		if value.Instances == 0 {
@@ -144,7 +140,7 @@ func PrintConfig(name string) {
 	printSetting("Kill Process?", strconv.FormatBool(settings.Kill))
 	printSetting("Container Name", settings.Container)
 	printSetting("Volumn(s)", strings.Join(settings.Volumn, " "))
-	printSetting("Remote Volumn", settings.RemoteVolumn)
+	printSetting("Working Directory", settings.WorkingDir)
 	printSetting("Raw Command", settings.Raw)
 	printSetting("Auto Start", strconv.FormatBool(settings.AutoStart))
 }

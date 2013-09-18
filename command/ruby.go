@@ -5,29 +5,26 @@ import (
 )
 
 func init() {
-	if interactiveCommands == nil {
-		interactiveCommands = make(map[string]Executor)
-	}
 
-	interactiveCommands["irb"] = Executor{
+	available.addInteractive("irb", Executor{
 		description: "open an irb session against this container (NOTE: may not have ruby)",
-		run:         Irb}
+		run:         Irb})
 
-	interactiveCommands["ruby"] = Executor{
+	available.addInteractive("ruby", Executor{
 		description: "execute ruby against this container",
-		run:         Ruby}
+		run:         Ruby})
 
-	interactiveCommands["rake"] = Executor{
+	available.addInteractive("rake", Executor{
 		description: "execute rake against this container",
-		run:         Rake}
+		run:         Rake})
 
-	interactiveCommands["bundle"] = Executor{
+	available.addInteractive("bundle", Executor{
 		description: "execute bundle against this container",
-		run:         Bundle}
+		run:         Bundle})
 
-	interactiveCommands["bundle_install"] = Executor{
+	available.addInteractive("bundle_install", Executor{
 		description: "execute bundle install --path .gems against this container",
-		run:         BundleInstall}
+		run:         BundleInstall})
 }
 
 func Irb(args ...string) {
