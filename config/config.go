@@ -4,6 +4,7 @@ import (
 	"code.google.com/p/gcfg"
 	"flag"
 	"fmt"
+	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -14,10 +15,8 @@ type Settings struct {
 	App        string
 	StartCmd   string
 	Console    string
-	Options    string
 	Instances  int
 	Port       int
-	PublicPort int
 	MB         int
 	GB         int
 	Bytes      int
@@ -30,7 +29,6 @@ type Settings struct {
 	QuotedOpts string
 	BuildFile  string
 	Dns        string
-	AutoStart  bool
 	UseNginx   bool
 	Env        []string
 	IncludeEnv bool
@@ -125,6 +123,13 @@ func printSetting(name string, value string) {
 	}
 }
 
+func Init() {
+	_, err := ioutil.ReadFile(configFile)
+	if err != nil {
+		ioutil.WriteFile(configFile, []byte(sampleFile), 0666)
+	}
+}
+
 func PrintConfig(name string) {
 	settings := Process(name)
 	fmt.Println("Process [" + name + "]")
@@ -133,7 +138,6 @@ func PrintConfig(name string) {
 	printSetting("Start Command", settings.StartCmd)
 	printSetting("Number of Instances", strconv.Itoa(settings.Instances))
 	printSetting("Private Port", strconv.Itoa(settings.Port))
-	printSetting("Public Port", strconv.Itoa(settings.PublicPort))
 	printSetting("RAM in GB", strconv.Itoa(settings.GB))
 	printSetting("RAM in MB", strconv.Itoa(settings.MB))
 	printSetting("RAM in Bytes", strconv.Itoa(settings.Bytes))
@@ -143,5 +147,35 @@ func PrintConfig(name string) {
 	printSetting("Volumn(s)", strings.Join(settings.Volumn, " "))
 	printSetting("Working Directory", settings.WorkingDir)
 	printSetting("Build File", settings.BuildFile)
-	printSetting("Auto Start", strconv.FormatBool(settings.AutoStart))
 }
+
+const sampleFile = `
+[process "db"]
+Container=mongodb_2.4.5 # required
+App=MongoDB
+StartCmd=mongod
+Gb=2
+Port=27017
+Console=mongo --host $MONGO_0_IP
+Dns=10.1.1.7
+Volumn=./.data/mongo:/data/db
+BuildFile=Docker.file.or.url
+IncludeEnv=true
+
+
+[process "rails"]
+StartCmd=./bin/rails server
+Container=ruby_2.0.0
+Volumn=.:/www
+Port=5000
+Mb=512
+WorkingDir=/www
+BuildFile=Docker.file.or.url
+Domain=rails.dev   # required for nginx template
+Allow=10.12.2.0/24 # required for nginx template
+Allow=10.12.1.0/24 # required for nginx template
+Dns=10.1.1.7
+UseNginx=true
+Kill=true
+
+`

@@ -14,6 +14,8 @@ func handleParam(args []string) {
 
 	if name == "list" {
 		config.PrintProcesses()
+	} else if name == "init" {
+		config.Init()
 	} else if command.IsCommand(name) {
 		for _, process := range config.List() {
 			command.ParseCommand([]string{process, name})

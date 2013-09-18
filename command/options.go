@@ -46,10 +46,6 @@ func settingsToParams(instance int, withPid bool) (opts []string) {
 		opts = append(opts, limitOpts()...)
 	}
 
-	if cfg.Options != "" {
-		opts = append(opts, cfg.Options)
-	}
-
 	if cfg.Port != 0 {
 		opts = append(opts, portOpts()...)
 	}
