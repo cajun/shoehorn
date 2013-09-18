@@ -23,6 +23,7 @@ func TestAppCount(t *testing.T) {
 	}
 }
 
+/*
 func TestGlobal(t *testing.T) {
 	actual := Process("one").Kill
 	expected := false
@@ -68,3 +69,4 @@ func TestOverride(t *testing.T) {
 		t.Errorf("'three' Port expected to be %d but instead it was '%d'", actual, expected)
 	}
 }
+*/
