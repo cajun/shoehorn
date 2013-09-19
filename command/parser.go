@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"github.com/cajun/shoehorn/config"
+	"github.com/cajun/shoehorn/logger"
 	"os"
 )
 
@@ -54,24 +55,24 @@ func SetProcess(proc string) {
 // PrintParams will print all of the settings that will be passed.
 // into docker It assumes the first instance                     .
 func PrintParams(args ...string) {
-	fmt.Println(settingsToParams(0, false))
+	logger.Log(fmt.Sprintln(settingsToParams(0, false)))
 }
 
 // PrintCommands will list out all of the commands to the end user.
 func PrintCommands() {
-	fmt.Println("** Daemonized Commands **")
+	logger.Log(fmt.Sprintln("** Daemonized Commands **"))
 	for cmd, desc := range DaemonizedCommands() {
-		fmt.Printf("%15s: %s\n", cmd, desc.description)
+		logger.Log(fmt.Sprintf("%15s: %s\n", cmd, desc.description))
 	}
 
-	fmt.Println("** Information Commands **")
+	logger.Log(fmt.Sprintln("** Information Commands **"))
 	for cmd, desc := range InfoCommands() {
-		fmt.Printf("%15s: %s\n", cmd, desc.description)
+		logger.Log(fmt.Sprintf("%15s: %s\n", cmd, desc.description))
 	}
 
-	fmt.Println("** Interactive Commands **")
+	logger.Log(fmt.Sprintln("** Interactive Commands **"))
 	for cmd, desc := range InteractiveCommands() {
-		fmt.Printf("%15s: %s\n", cmd, desc.description)
+		logger.Log(fmt.Sprintf("%15s: %s\n", cmd, desc.description))
 	}
 }
 
@@ -106,20 +107,25 @@ func ParseCommand(args []string) {
 	SetConfig(config.Process(args[0]))
 	opts := commandOpts(args)
 
-	name := args[1]
-	daemonCmd, daemonOk := DaemonizedCommands()[name]
-	infoCmd, infoOk := InfoCommands()[name]
-	interactiveCmd, interactiveOk := InteractiveCommands()[name]
+	if message, ok := cfg.Valid(); ok {
 
-	switch {
-	case daemonOk:
-		daemonCmd.run(opts...)
-	case infoOk:
-		infoCmd.run(opts...)
-	case interactiveOk:
-		interactiveCmd.run(opts...)
-	default:
-		fmt.Printf("Running Command: (%v) doesn't exists\n", args[2])
+		name := args[1]
+		daemonCmd, daemonOk := DaemonizedCommands()[name]
+		infoCmd, infoOk := InfoCommands()[name]
+		interactiveCmd, interactiveOk := InteractiveCommands()[name]
+
+		switch {
+		case daemonOk:
+			daemonCmd.run(opts...)
+		case infoOk:
+			infoCmd.run(opts...)
+		case interactiveOk:
+			interactiveCmd.run(opts...)
+		default:
+			logger.Log(fmt.Sprintf("Running Command: (%v) doesn't exists\n", args[2]))
+		}
+	} else {
+		logger.Log(message)
 	}
 
 }
@@ -130,7 +136,7 @@ func pids(args ...string) (pids []string) {
 		id, err := pid(i)
 
 		if err != nil {
-			fmt.Println(err)
+			logger.Log(fmt.Sprintln(err))
 		} else {
 			pids = append(pids, id)
 		}

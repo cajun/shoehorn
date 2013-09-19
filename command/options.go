@@ -3,6 +3,7 @@ package command
 import (
 	"fmt"
 	"github.com/cajun/shoehorn/config"
+	"github.com/cajun/shoehorn/logger"
 	"github.com/mgutz/ansi"
 	"os"
 	"os/user"
@@ -16,9 +17,9 @@ func outOpts(opts []string) {
 	lime := ansi.ColorCode("green:black")
 	reset := ansi.ColorCode("reset")
 	msg := lime + "docker %s" + reset + "\n"
-	fmt.Println(" ")
-	fmt.Printf(msg, strings.Join(opts, " "))
-	fmt.Println(" ")
+	logger.Log(fmt.Sprintln(" "))
+	logger.Log(fmt.Sprintf(msg, strings.Join(opts, " ")))
+	logger.Log(fmt.Sprintln(" "))
 }
 
 // pidFileName returns the path of the pid file
@@ -59,7 +60,10 @@ func settingsToParams(instance int, withPid bool) (opts []string) {
 	}
 
 	opts = append(opts, cfg.Container)
-	opts = append(opts, strings.Split(cfg.StartCmd, " ")...)
+
+	if cfg.StartCmd != "" {
+		opts = append(opts, strings.Split(cfg.StartCmd, " ")...)
+	}
 	if cfg.QuotedOpts != "" {
 		opts = append(opts, fmt.Sprintf("'%s'", cfg.QuotedOpts))
 	}
@@ -110,9 +114,10 @@ func envOpts() (opts []string) {
 
 			for i := 0; i < cfg.Instances; i++ {
 				if running() {
-					name := fmt.Sprintf("%s_%d_IP=%s", process, i, ip(i))
+					net := networkSettings(i)
+					name := fmt.Sprintf("%s_%d_IP=%s", process, i, net.Ip)
 					opts = append(opts, "-e", strings.ToUpper(name))
-					name = fmt.Sprintf("%s_%d_PORT=%s", process, i, privatePort(i).tcp)
+					name = fmt.Sprintf("%s_%d_PORT=%s", process, i, net.Private.tcp)
 					opts = append(opts, "-e", strings.ToUpper(name))
 				}
 			}

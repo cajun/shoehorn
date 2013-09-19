@@ -4,6 +4,7 @@ import (
 	"code.google.com/p/gcfg"
 	"flag"
 	"fmt"
+	"github.com/cajun/shoehorn/logger"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -69,6 +70,14 @@ func LoadConfigs() {
 	gcfg.ReadFileInto(&cfg, overrideFile)
 }
 
+func (s *Settings) Valid() (message string, valid bool) {
+	if s.Container == "" {
+		message = fmt.Sprintln("You must specifiy a container")
+	}
+
+	return message, len(message) == 0
+}
+
 // setDefaults fills out the configuration with safe defaults to ensure
 // no process will try to take over the system by default
 func setDefaults(cfg *Config) {
@@ -113,13 +122,13 @@ func Process(name string) *Settings {
 
 // PrintProcesses prints out the listing of all the sections in the config file
 func PrintProcesses() {
-	fmt.Println("** List of Apps **")
-	fmt.Println(List())
+	logger.Log(fmt.Sprintln("** List of Apps **"))
+	logger.Log(fmt.Sprintln(List()))
 }
 
 func printSetting(name string, value string) {
 	if value != "" {
-		fmt.Printf("%20v  %v\n", name+":", value)
+		logger.Log(fmt.Sprintf("%20v  %v\n", name+":", value))
 	}
 }
 
@@ -132,7 +141,7 @@ func Init() {
 
 func PrintConfig(name string) {
 	settings := Process(name)
-	fmt.Println("Process [" + name + "]")
+	logger.Log(fmt.Sprintln("Process [" + name + "]"))
 
 	printSetting("App Name", settings.App)
 	printSetting("Start Command", settings.StartCmd)

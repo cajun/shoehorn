@@ -5,7 +5,9 @@ import (
 	"fmt"
 	"github.com/cajun/shoehorn/command"
 	"github.com/cajun/shoehorn/config"
+	"github.com/cajun/shoehorn/logger"
 	"github.com/cajun/shoehorn/server"
+	"os"
 )
 
 // handleParam takes in the given parameters and decides what to do with them.
@@ -25,7 +27,19 @@ func handleParam(args []string) {
 	} else if config.Process(name) != nil && len(args) > 1 {
 		command.ParseCommand(args)
 	} else {
-		fmt.Printf("Process Name: (%v) doesn't exists\n", name)
+		logger.Log(fmt.Sprintf("Process Name: (%v) doesn't exists\n", name))
+	}
+}
+
+func doIt(args []string) {
+	defer logger.Done()
+	if server.On() {
+		server.Up()
+	} else if len(args) >= 1 {
+		handleParam(args)
+	} else {
+		flag.PrintDefaults()
+		command.PrintCommands()
 	}
 }
 
@@ -37,12 +51,16 @@ func main() {
 
 	args := flag.Args()
 
-	if server.On() {
-		server.Up()
-	} else if len(args) >= 1 {
-		handleParam(args)
-	} else {
-		flag.PrintDefaults()
-		command.PrintCommands()
+	pipe := logger.New(os.Stdout)
+
+	go doIt(args)
+
+	result := logger.InitStatus()
+	for !result.Done {
+		select {
+		case result = <-pipe:
+			logger.Write(result)
+		}
 	}
+
 }
