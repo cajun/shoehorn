@@ -334,12 +334,12 @@ func Attach(args ...string) {
 // Status will list out the statuses for the given process
 func Status(args ...string) {
 	runInstances("Status", func(i int, id string) error {
-		net := networkSettings(i)
 		on := running()
 		logger.Log(fmt.Sprintf("Container ID: %s\n", id))
 		logger.Log(fmt.Sprintf("     Running: %s\n", strconv.FormatBool(on)))
 
 		if on {
+			net := networkSettings(i)
 			logger.Log(fmt.Sprintf("          IP: %s\n", net.Ip))
 			logger.Log(fmt.Sprintf(" Public Port: %s\n", net.Public.tcp))
 			logger.Log(fmt.Sprintf("Private Port: %s\n", net.Private.tcp))
@@ -398,12 +398,8 @@ func runInstances(message string, fn runner) {
 	logger.Log(fmt.Sprintf("%s %v\n", message, process))
 	for i := 0; i < cfg.Instances; i++ {
 		logger.Log(fmt.Sprintf("...Instance %d of %d %s\n", i, cfg.Instances, process))
-		id, err := pid(i)
-		if err != nil {
-			logger.Log(fmt.Sprintln(err))
-		} else {
-			fn(i, id)
-		}
+		id, _ := pid(i)
+		fn(i, id)
 	}
 
 }

@@ -47,6 +47,7 @@ func doIt(args []string) {
 // then passes off the commands to the handleParams method
 func main() {
 	flag.Parse()
+	os.Chdir(command.Root())
 	config.LoadConfigs()
 
 	args := flag.Args()

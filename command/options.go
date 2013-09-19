@@ -16,10 +16,8 @@ import (
 func outOpts(opts []string) {
 	lime := ansi.ColorCode("green:black")
 	reset := ansi.ColorCode("reset")
-	msg := lime + "docker %s" + reset + "\n"
-	logger.Log(fmt.Sprintln(" "))
+	msg := "\n\n" + lime + "docker %s" + reset + "\n\n"
 	logger.Log(fmt.Sprintf(msg, strings.Join(opts, " ")))
-	logger.Log(fmt.Sprintln(" "))
 }
 
 // pidFileName returns the path of the pid file
