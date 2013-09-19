@@ -122,7 +122,7 @@ func ParseCommand(args []string) {
 		case interactiveOk:
 			interactiveCmd.run(opts...)
 		default:
-			logger.Log(fmt.Sprintf("Running Command: (%v) doesn't exists\n", args[2]))
+			logger.Log(fmt.Sprintf("Running Command: (%v) doesn't exists\n", args[1]))
 		}
 	} else {
 		logger.Log(message)

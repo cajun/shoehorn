@@ -8,6 +8,7 @@ import (
 	"github.com/cajun/shoehorn/logger"
 	"os"
 	"os/exec"
+	"strconv"
 	"strings"
 )
 
@@ -99,6 +100,9 @@ func init() {
 	available.addInteractive("update", Executor{
 		description: "pull and then build the images",
 		run:         Update})
+	available.addInteractive("attach", Executor{
+		description: "attaches to the first instance running",
+		run:         Attach})
 	//available.addInteractive("ssh", Executor{
 	//description: "ssh into the container",
 	//run:         Ssh})
@@ -317,15 +321,31 @@ func running(args ...string) (found bool) {
 // Logs will print out all of the logs for each of the instances
 func Logs(args ...string) {
 	runInstances("Logs", func(i int, id string) error {
-		return run("log", id)
+		return run("logs", id)
 	})
+}
 
+func Attach(args ...string) {
+	runInstances("Attach", func(i int, id string) error {
+		return run("attach", id)
+	})
 }
 
 // Status will list out the statuses for the given process
 func Status(args ...string) {
 	runInstances("Status", func(i int, id string) error {
-		return run("ps", id)
+		net := networkSettings(i)
+		on := running()
+		logger.Log(fmt.Sprintf("Container ID: %s\n", id))
+		logger.Log(fmt.Sprintf("     Running: %s\n", strconv.FormatBool(on)))
+
+		if on {
+			logger.Log(fmt.Sprintf("          IP: %s\n", net.Ip))
+			logger.Log(fmt.Sprintf(" Public Port: %s\n", net.Public.tcp))
+			logger.Log(fmt.Sprintf("Private Port: %s\n", net.Private.tcp))
+		}
+
+		return nil
 	})
 }
 
