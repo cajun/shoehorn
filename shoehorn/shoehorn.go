@@ -7,6 +7,7 @@ import (
 	"github.com/cajun/shoehorn/config"
 	"github.com/cajun/shoehorn/logger"
 	"github.com/cajun/shoehorn/server"
+	"os"
 )
 
 // handleParam takes in the given parameters and decides what to do with them.
@@ -50,7 +51,7 @@ func main() {
 
 	args := flag.Args()
 
-	pipe := logger.New(server.On())
+	pipe := logger.New(os.Stdout)
 
 	go doIt(args)
 

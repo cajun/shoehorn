@@ -148,16 +148,24 @@ func makeHandler(fn func(http.ResponseWriter, *http.Request, string)) http.Handl
 	}
 }
 
+func before(fn func(http.ResponseWriter, *http.Request)) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		logger.Log(fmt.Sprintln(r.URL.Path))
+		fn(w, r)
+	}
+}
+
 func Up() {
-	http.HandleFunc("/clone", cloneHandler)
-	http.HandleFunc("/commands/", commandHandler)
-	http.HandleFunc("/apps/json/", makeHandler(appHandler))
-	http.HandleFunc("/list/json", listHandler)
-	http.HandleFunc("/css/application.css", cssHandler)
-	http.HandleFunc("/js/application.js", jsHandler)
-	http.HandleFunc("/", indexHandler)
-	fmt.Printf("Server up on port 9369\n")
-	fmt.Printf("Root: %s\n", command.Root())
+	http.HandleFunc("/clone", before(cloneHandler))
+	http.HandleFunc("/commands/", before(commandHandler))
+	http.HandleFunc("/apps/json/", before(makeHandler(appHandler)))
+	http.HandleFunc("/list/json", before(listHandler))
+	http.HandleFunc("/css/application.css", before(cssHandler))
+	http.HandleFunc("/js/application.js", before(jsHandler))
+	http.HandleFunc("/", before(indexHandler))
+
+	logger.Log(fmt.Sprintf("Server up on port 9369\n"))
+	logger.Log(fmt.Sprintf("Root: %s\n", command.Root()))
 
 	http.ListenAndServe(":9369", nil)
 }

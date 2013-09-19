@@ -21,6 +21,12 @@ type Ports struct {
 	udp string
 }
 
+type Network struct {
+	Ip      string
+	Public  Ports
+	Private Ports
+}
+
 type Available struct {
 	daemonized  map[string]Executor
 	info        map[string]Executor
@@ -71,21 +77,12 @@ func init() {
 	available.addInfo("status", Executor{
 		description: "view the status of the process",
 		run:         Status})
-	available.addInfo("ip", Executor{
-		description: "view the private ip",
-		run:         IP})
 	available.addInfo("logs", Executor{
 		description: "see logs for the process",
 		run:         Logs})
-	available.addInfo("port", Executor{
-		description: "view the private port",
-		run:         Port})
 	available.addInfo("params", Executor{
 		description: "view the params that will be used in the docker command",
 		run:         PrintParams})
-	available.addInfo("public_port", Executor{
-		description: "view the public port",
-		run:         PublicPort})
 
 	available.addInteractive("build", Executor{
 		description: "build a container from a file or url",
@@ -181,13 +178,11 @@ func Bash(args ...string) {
 }
 
 func Install(args ...string) {
-	status := make(chan string)
-
 	go func() {
 		os.Chdir(root)
 		opts := []string{"clone", args[0]}
 
-		status <- "Cloning " + args[0]
+		logger.Log("Cloning " + args[0])
 		cmd := exec.Command("git", opts...)
 		cmd.Stdout = os.Stdout
 		cmd.Stderr = os.Stderr
@@ -195,86 +190,51 @@ func Install(args ...string) {
 
 		parts := strings.Split(args[0], "/")
 		path := parts[len(parts):][0]
-		status <- "Building Images here: " + path
+		logger.Log("Building Images here: " + path)
 		os.Chdir(path)
 		Build(path)
-
 	}()
-
-}
-
-func IP(args ...string) {
-	logger.Log(fmt.Sprintln("Checking ip address"))
-	logger.Log(fmt.Sprintf("IP: %s\n", ip(0)))
 }
 
 func ip(instance int) string {
-	settings, _ := networkSettings(instance)
-	return settings["IPAddress"].(string)
+	return networkSettings(instance).Ip
 }
 
-func Port(args ...string) {
-	logger.Log(fmt.Sprintln("Checking private port"))
-	logger.Log(fmt.Sprintf("Private Port: %d\n", cfg.Port))
-}
+func ports(instance int, settings map[string]interface{}) (public, private Ports) {
 
-func publicPort(instance int) (ports Ports) {
-
-	settings, _ := networkSettings(instance)
 	if settings["PortMapping"] != nil {
 		s := settings["PortMapping"].(map[string]interface{})
 
 		if s["Tcp"] != nil {
-			for _, public := range s["Tcp"].(map[string]interface{}) {
-				ports.tcp = public.(string)
+			for private_port, public_port := range s["Tcp"].(map[string]interface{}) {
+				private.tcp = private_port
+				public.tcp = public_port.(string)
 			}
 
 		}
 
 		if s["Udp"] != nil {
-			for _, public := range s["Udp"].(map[string]interface{}) {
-				ports.udp = public.(string)
+			for private_port, public_port := range s["Udp"].(map[string]interface{}) {
+				private.tcp = private_port
+				public.tcp = public_port.(string)
 			}
 		}
 
 	}
-	return ports
-}
-
-func privatePort(instance int) (ports Ports) {
-
-	settings, _ := networkSettings(instance)
-	if settings["PortMapping"] != nil {
-		s := settings["PortMapping"].(map[string]interface{})
-
-		if s["Tcp"] != nil {
-			for private, _ := range s["Tcp"].(map[string]interface{}) {
-				ports.tcp = private
-			}
-
-		}
-
-		if s["Udp"] != nil {
-			for private, _ := range s["Udp"].(map[string]interface{}) {
-				ports.udp = private
-			}
-		}
-
-	}
-	return ports
-}
-
-func PublicPort(args ...string) {
-	logger.Log(fmt.Sprintln("Checking public port"))
-	logger.Log(fmt.Sprintf("Public Port: %d\n", publicPort(0)))
+	return
 }
 
 func Ssh(args ...string) {
 }
 
-func networkSettings(instance int) (setting map[string]interface{}, err error) {
-	settings, err := inspect(0)
-	return settings["NetworkSettings"].(map[string]interface{}), err
+func networkSettings(instance int) (net Network) {
+	settings, err := inspect(instance)
+	settings = settings["NetworkSettings"].(map[string]interface{})
+
+	net.Ip = settings["IPAddress"].(string)
+
+	net.Public, net.Private = ports(instance, settings)
+	return
 }
 
 func inspect(instance int) (u map[string]interface{}, err error) {
@@ -394,8 +354,9 @@ func runInstances(message string, fn runner) {
 		id, err := pid(i)
 		if err != nil {
 			logger.Log(fmt.Sprintln(err))
+		} else {
+			fn(i, id)
 		}
-		fn(i, id)
 	}
 
 }
@@ -403,8 +364,7 @@ func runInstances(message string, fn runner) {
 func runExec(cmd string, args ...string) {
 	joined := strings.Join(args, " ")
 	cfg.StartCmd = "/bin/bash -c"
-	dir := ""
-	cfg.QuotedOpts = fmt.Sprintf("'%s %s'", dir, cmd, joined)
+	cfg.QuotedOpts = fmt.Sprintf("'%s %s'", cmd, joined)
 
 	runInteractive("run", settingsToParams(0, false)...)
 }

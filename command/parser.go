@@ -107,20 +107,25 @@ func ParseCommand(args []string) {
 	SetConfig(config.Process(args[0]))
 	opts := commandOpts(args)
 
-	name := args[1]
-	daemonCmd, daemonOk := DaemonizedCommands()[name]
-	infoCmd, infoOk := InfoCommands()[name]
-	interactiveCmd, interactiveOk := InteractiveCommands()[name]
+	if message, ok := cfg.Valid(); ok {
 
-	switch {
-	case daemonOk:
-		daemonCmd.run(opts...)
-	case infoOk:
-		infoCmd.run(opts...)
-	case interactiveOk:
-		interactiveCmd.run(opts...)
-	default:
-		logger.Log(fmt.Sprintf("Running Command: (%v) doesn't exists\n", args[2]))
+		name := args[1]
+		daemonCmd, daemonOk := DaemonizedCommands()[name]
+		infoCmd, infoOk := InfoCommands()[name]
+		interactiveCmd, interactiveOk := InteractiveCommands()[name]
+
+		switch {
+		case daemonOk:
+			daemonCmd.run(opts...)
+		case infoOk:
+			infoCmd.run(opts...)
+		case interactiveOk:
+			interactiveCmd.run(opts...)
+		default:
+			logger.Log(fmt.Sprintf("Running Command: (%v) doesn't exists\n", args[2]))
+		}
+	} else {
+		logger.Log(message)
 	}
 
 }

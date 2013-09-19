@@ -70,6 +70,14 @@ func LoadConfigs() {
 	gcfg.ReadFileInto(&cfg, overrideFile)
 }
 
+func (s *Settings) Valid() (message string, valid bool) {
+	if s.Container == "" {
+		message = fmt.Sprintln("You must specifiy a container")
+	}
+
+	return message, len(message) == 0
+}
+
 // setDefaults fills out the configuration with safe defaults to ensure
 // no process will try to take over the system by default
 func setDefaults(cfg *Config) {
