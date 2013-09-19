@@ -93,9 +93,15 @@ func init() {
 	available.addInteractive("bash", Executor{
 		description: "execute a bash shell for the process",
 		run:         Bash})
-	available.addInteractive("ssh", Executor{
-		description: "ssh into the container",
-		run:         Ssh})
+	available.addInteractive("get", Executor{
+		description: "clone a git repo and then build the images",
+		run:         Install})
+	available.addInteractive("update", Executor{
+		description: "pull and then build the images",
+		run:         Update})
+	//available.addInteractive("ssh", Executor{
+	//description: "ssh into the container",
+	//run:         Ssh})
 }
 
 // DaemonizedCommands are commands that will be daemonized or manage daemonized
@@ -186,14 +192,35 @@ func Install(args ...string) {
 		cmd := exec.Command("git", opts...)
 		cmd.Stdout = os.Stdout
 		cmd.Stderr = os.Stderr
-		cmd.Run()
+		err := cmd.Run()
 
-		parts := strings.Split(args[0], "/")
-		path := parts[len(parts):][0]
-		logger.Log("Building Images here: " + path)
-		os.Chdir(path)
-		Build(path)
+		if err == nil {
+			parts := strings.Split(args[0], "/")
+			path := parts[len(parts):][0]
+			logger.Log("Building Images here: " + path)
+			os.Chdir(path)
+			Build(path)
+		} else {
+			logger.Log(err.Error())
+		}
 	}()
+}
+
+func Update(args ...string) {
+	go func() {
+		logger.Log("Updaing...")
+		cmd := exec.Command("git", "pull")
+		cmd.Stdout = os.Stdout
+		cmd.Stderr = os.Stderr
+		err := cmd.Run()
+
+		if err == nil {
+			Build(root)
+		} else {
+			logger.Log(err.Error())
+		}
+	}()
+
 }
 
 func ip(instance int) string {
@@ -224,8 +251,8 @@ func ports(instance int, settings map[string]interface{}) (public, private Ports
 	return
 }
 
-func Ssh(args ...string) {
-}
+//func Ssh(args ...string) {
+//}
 
 func networkSettings(instance int) (net Network) {
 	settings, err := inspect(instance)
