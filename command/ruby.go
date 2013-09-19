@@ -46,6 +46,7 @@ func Bundle(args ...string) {
 
 func BundleInstall(args ...string) {
 	if cfg == nil {
+		config.LoadConfigs()
 		for _, process := range config.List() {
 			SetProcess(process)
 			SetConfig(config.Process(process))

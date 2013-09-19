@@ -128,6 +128,8 @@ func InteractiveCommands() map[string]Executor {
 
 // Build will create the container if nessary
 func Build(args ...string) {
+	wd, _ := os.Getwd()
+	logger.Log(fmt.Sprintf("In %s to build.", wd))
 	if cfg != nil {
 		logger.Log(fmt.Sprintf("Building...%s\n", cfg.App))
 		cmd := exec.Command("docker", "build", "-t", cfg.Container, cfg.BuildFile)
@@ -136,6 +138,7 @@ func Build(args ...string) {
 		cmd.Stdin = os.Stdin
 		cmd.Run()
 	} else {
+		config.LoadConfigs()
 		for _, process := range config.List() {
 			SetProcess(process)
 			SetConfig(config.Process(process))
@@ -211,9 +214,12 @@ func Install(args ...string) {
 		if err == nil {
 			parts := strings.Split(args[0], "/")
 			path := parts[len(parts)-1:][0]
-			logger.Log("Building Images here: " + path + "\n")
-			os.Chdir(path)
+			path = strings.Replace(path, ".git", "", -1)
+			wd, _ := os.Getwd()
+			logger.Log("Building Images here: " + wd + "/" + path + "\n")
+			os.Chdir(wd + "/" + path)
 			Build(path)
+			cfg = nil
 			BundleInstall("now")
 		} else {
 			logger.Log(err.Error())
@@ -231,6 +237,7 @@ func Update(args ...string) {
 
 		if err == nil {
 			Build(root)
+			cfg = nil
 			BundleInstall("now")
 		} else {
 			logger.Log(err.Error())
