@@ -255,7 +255,7 @@ func ports(instance int, settings map[string]interface{}) (public, private Ports
 //}
 
 func networkSettings(instance int) (net Network) {
-	settings, err := inspect(instance)
+	settings, _ := inspect(instance)
 	settings = settings["NetworkSettings"].(map[string]interface{})
 
 	net.Ip = settings["IPAddress"].(string)
