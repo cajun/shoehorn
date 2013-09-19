@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
+	"github.com/cajun/shoehorn/config"
 	"github.com/cajun/shoehorn/logger"
 	"os"
 	"os/exec"
@@ -84,10 +85,10 @@ func init() {
 	available.addInfo("params", Executor{
 		description: "view the params that will be used in the docker command",
 		run:         PrintParams})
-
-	available.addInteractive("build", Executor{
+	available.addInfo("build", Executor{
 		description: "build a container from a file or url",
 		run:         Build})
+
 	available.addInteractive("console", Executor{
 		description: "execute the console command from the config",
 		run:         Console})
@@ -127,11 +128,23 @@ func InteractiveCommands() map[string]Executor {
 
 // Build will create the container if nessary
 func Build(args ...string) {
-	cmd := exec.Command("docker", "-t", cfg.Container, cfg.BuildFile)
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	cmd.Stdin = os.Stdin
-	cmd.Run()
+	wd, _ := os.Getwd()
+	logger.Log(fmt.Sprintf("In %s to build.", wd))
+	if cfg != nil {
+		logger.Log(fmt.Sprintf("Building...%s\n", cfg.App))
+		cmd := exec.Command("docker", "build", "-t", cfg.Container, cfg.BuildFile)
+		cmd.Stdout = os.Stdout
+		cmd.Stderr = os.Stderr
+		cmd.Stdin = os.Stdin
+		cmd.Run()
+	} else {
+		config.LoadConfigs()
+		for _, process := range config.List() {
+			SetProcess(process)
+			SetConfig(config.Process(process))
+			Build(args...)
+		}
+	}
 }
 
 // Start will run the standard start command
@@ -192,7 +205,7 @@ func Install(args ...string) {
 		os.Chdir(root)
 		opts := []string{"clone", args[0]}
 
-		logger.Log("Cloning " + args[0])
+		logger.Log("Cloning " + args[0] + "\n")
 		cmd := exec.Command("git", opts...)
 		cmd.Stdout = os.Stdout
 		cmd.Stderr = os.Stderr
@@ -200,10 +213,14 @@ func Install(args ...string) {
 
 		if err == nil {
 			parts := strings.Split(args[0], "/")
-			path := parts[len(parts):][0]
-			logger.Log("Building Images here: " + path)
-			os.Chdir(path)
+			path := parts[len(parts)-1:][0]
+			path = strings.Replace(path, ".git", "", -1)
+			wd, _ := os.Getwd()
+			logger.Log("Building Images here: " + wd + "/" + path + "\n")
+			os.Chdir(wd + "/" + path)
 			Build(path)
+			cfg = nil
+			BundleInstall("now")
 		} else {
 			logger.Log(err.Error())
 		}
@@ -220,6 +237,8 @@ func Update(args ...string) {
 
 		if err == nil {
 			Build(root)
+			cfg = nil
+			BundleInstall("now")
 		} else {
 			logger.Log(err.Error())
 		}
