@@ -74,7 +74,7 @@ func settings() NginxConf {
 
 	return NginxConf{
 		App:     cfg.App,
-		Ports:   ports(),
+		Ports:   nginxPorts(),
 		Domains: strings.Join(cfg.Domain, " "),
 		Allow:   cfg.Allow,
 		Pwd:     pwd,
@@ -82,10 +82,10 @@ func settings() NginxConf {
 
 }
 
-func ports() (tcp []NginxPort) {
+func nginxPorts() (tcp []NginxPort) {
 	runInstances("pulling ports", func(i int, id string) (err error) {
-		port := publicPort(i)
-		tcp = append(tcp, NginxPort{PublicPort: port.tcp})
+		net := networkSettings(i)
+		tcp = append(tcp, NginxPort{PublicPort: net.Public.tcp})
 		return
 	})
 	return

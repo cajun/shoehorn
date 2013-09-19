@@ -228,7 +228,7 @@ func Ssh(args ...string) {
 }
 
 func networkSettings(instance int) (net Network) {
-	settings, err := inspect(instance)
+	settings, _ := inspect(instance)
 	settings = settings["NetworkSettings"].(map[string]interface{})
 
 	net.Ip = settings["IPAddress"].(string)
