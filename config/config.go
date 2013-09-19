@@ -33,6 +33,7 @@ type Settings struct {
 	UseNginx   bool
 	Env        []string
 	IncludeEnv bool
+	UseBundler bool
 }
 
 type Config struct {

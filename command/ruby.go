@@ -1,6 +1,7 @@
 package command
 
 import (
+	"github.com/cajun/shoehorn/config"
 	"strings"
 )
 
@@ -44,5 +45,13 @@ func Bundle(args ...string) {
 }
 
 func BundleInstall(args ...string) {
-	runExec("bundle install --path .gems", "")
+	if cfg == nil {
+		for _, process := range config.List() {
+			SetProcess(process)
+			SetConfig(config.Process(process))
+			BundleInstall(args...)
+		}
+	} else if cfg.UseBundler {
+		runExec("bundle", "install", "--path", ".gems")
+	}
 }
