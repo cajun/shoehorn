@@ -8,14 +8,7 @@ import (
 	"github.com/cajun/shoehorn/logger"
 	"github.com/cajun/shoehorn/server"
 	"os"
-	"os/signal"
 )
-
-var wait = false
-
-func init() {
-	flag.BoolVar(&wait, "wait", false, "wait for process signal")
-}
 
 // handleParam takes in the given parameters and decides what to do with them.
 func handleParam(args []string) {
@@ -71,11 +64,4 @@ func main() {
 			logger.Write(result)
 		}
 	}
-
-	if wait {
-		c := make(chan os.Signal, 1)
-		signal.Notify(c, os.Interrupt, os.Kill)
-		<-c
-	}
-
 }

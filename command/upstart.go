@@ -5,8 +5,6 @@ import (
 	"github.com/cajun/shoehorn/logger"
 	"os"
 	"strings"
-
-	//"io/ioutil"
 	"text/template"
 )
 
@@ -48,6 +46,5 @@ description "{{.App}} containers"
 start on started docker
 stop on runlevel [!2345]
 
-exec {{.Exe}} -wait true -root {{.Pwd}} start
-post-stop {{.Exe}} -root {{.Pwd}} stop
+exec {{.Exe}} -root {{.Pwd}} start
 `
