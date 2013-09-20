@@ -43,9 +43,10 @@ func InstallUpstart(args ...string) {
 }
 
 const upstartConf = `
-description ".{{App}} containers"
+description "{{.App}} containers"
 
-start on started nginx
+start on started docker
+stop on runlevel [!2345]
 
 exec {{.Exe}} -wait true -root {{.Pwd}} start
 post-stop {{.Exe}} -root {{.Pwd}} stop
