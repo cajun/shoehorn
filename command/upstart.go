@@ -46,5 +46,6 @@ description "{{.App}} containers"
 start on started docker
 stop on runlevel [!2345]
 
-exec {{.Exe}} -root {{.Pwd}} start
+exec {{.Exe}} -wait true -root {{.Pwd}} start &
+post-stop {{.Exe}} -root {{.Pwd}} stop
 `
