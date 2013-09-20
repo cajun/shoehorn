@@ -11,6 +11,7 @@ import (
 )
 
 type UpstartConf struct {
+	App string
 	Exe string
 	Pwd string
 }
@@ -36,13 +37,16 @@ func InstallUpstart(args ...string) {
 	fileName := fmt.Sprintf("/etc/init/%s.conf", name)
 	file, err := os.OpenFile(fileName, os.O_RDWR|os.O_CREATE, 0666)
 
-	conf := UpstartConf{Exe: exe(), Pwd: wd}
+	conf := UpstartConf{App: name, Exe: exe(), Pwd: wd}
 
 	t.Execute(file, conf)
 }
 
 const upstartConf = `
+description ".{{App}} containers"
+
 start on started nginx
-exec {{.Exe}} --root {{.Pwd}} start
-pre-stop {{.Exe}} --root {{.Pwd}} stop
+
+exec {{.Exe}} -wait true -root {{.Pwd}} start
+post-stop {{.Exe}} -root {{.Pwd}} stop
 `
