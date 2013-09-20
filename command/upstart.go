@@ -42,5 +42,7 @@ func InstallUpstart(args ...string) {
 }
 
 const upstartConf = `
+start on started nginx
 exec {{.Exe}} --root {{.Pwd}} start
+pre-stop {{.Exe}} --root {{.Pwd}} stop
 `
