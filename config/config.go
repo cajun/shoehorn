@@ -13,27 +13,29 @@ import (
 )
 
 type Settings struct {
-	App        string
-	StartCmd   string
-	Console    string
-	Instances  int
-	Port       int
-	MB         int
-	GB         int
-	Bytes      int
-	Domain     []string
-	Allow      []string
-	Kill       bool
-	Container  string
-	Volumn     []string
-	WorkingDir string
-	QuotedOpts string
-	BuildFile  string
-	Dns        string
-	UseNginx   bool
-	Env        []string
-	IncludeEnv bool
-	UseBundler bool
+	App         string
+	StartCmd    string
+	Console     string
+	Instances   int
+	Port        int
+	MB          int
+	GB          int
+	Bytes       int
+	Domain      []string
+	Allow       []string
+	Kill        bool
+	Container   string
+	Volumn      []string
+	WorkingDir  string
+	QuotedOpts  string
+	BuildFile   string
+	Dns         string
+	UseNginx    bool
+	Env         []string
+	IncludeEnv  bool
+	UseBundler  bool
+	PostInstall string
+	PostUpdate  string
 }
 
 type Config struct {

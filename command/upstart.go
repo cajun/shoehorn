@@ -26,7 +26,7 @@ func InstallUpstart(args ...string) {
 	t, err := t.Parse(upstartConf)
 
 	if err != nil {
-		logger.Log(err.Error())
+		logger.Log(err.Error() + "\n")
 	}
 
 	wd, _ := os.Getwd()

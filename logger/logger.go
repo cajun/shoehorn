@@ -1,9 +1,7 @@
 package logger
 
 import (
-	"fmt"
 	"io"
-	"time"
 )
 
 type Status struct {
@@ -38,7 +36,8 @@ func InitStatus() Status {
 }
 
 func Write(status Status) {
-	const layout = "Jan 2, 2006 at 3:04.05 pm (MST)"
-	t := time.Now().Format(layout)
-	output.Write([]byte(fmt.Sprintf("%s -- %s", t, status.message)))
+	//const layout = "Jan 2, 2006 at 3:04.05 pm (MST)"
+	//t := time.Now().Format(layout)
+	//output.Write([]byte(fmt.Sprintf("%s -- %s", t, status.message)))
+	output.Write([]byte(status.message))
 }

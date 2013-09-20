@@ -95,6 +95,9 @@ func init() {
 	available.addInteractive("bash", Executor{
 		description: "execute a bash shell for the process",
 		run:         Bash})
+	available.addInteractive("run", Executor{
+		description: "execute raw command against the container",
+		run:         Run})
 	available.addInteractive("get", Executor{
 		description: "clone a git repo and then build the images",
 		run:         Install})
@@ -194,6 +197,12 @@ func Console(args ...string) {
 	runInteractive("run", settingsToParams(0, false)...)
 }
 
+func Run(args ...string) {
+	cfg.StartCmd = "/bin/bash -c"
+	cfg.QuotedOpts = "'" + strings.Join(args, " ") + "'"
+	runInteractive("run", settingsToParams(0, false)...)
+}
+
 // Bash will execute a bash command against the given container
 func Bash(args ...string) {
 	cfg.StartCmd = "/bin/bash"
@@ -221,6 +230,7 @@ func Install(args ...string) {
 			Build(path)
 			cfg = nil
 			BundleInstall("now")
+			postInstall()
 		} else {
 			logger.Log(err.Error())
 		}
@@ -239,11 +249,44 @@ func Update(args ...string) {
 			Build(root)
 			cfg = nil
 			BundleInstall("now")
+			postUpdate()
 		} else {
 			logger.Log(err.Error())
 		}
 	}()
 
+}
+
+func postInstall() {
+	if cfg == nil {
+		config.LoadConfigs()
+		for _, process := range config.List() {
+			SetProcess(process)
+			SetConfig(config.Process(process))
+			postInstall()
+		}
+	} else if cfg.PostInstall != "" {
+		cmd := exec.Command(cfg.PostInstall)
+		cmd.Stdout = os.Stdout
+		cmd.Stderr = os.Stderr
+		cmd.Run()
+	}
+}
+
+func postUpdate() {
+	if cfg == nil {
+		config.LoadConfigs()
+		for _, process := range config.List() {
+			SetProcess(process)
+			SetConfig(config.Process(process))
+			postInstall()
+		}
+	} else if cfg.PostUpdate != "" {
+		cmd := exec.Command(cfg.PostUpdate)
+		cmd.Stdout = os.Stdout
+		cmd.Stderr = os.Stderr
+		cmd.Run()
+	}
 }
 
 func ip(instance int) string {
