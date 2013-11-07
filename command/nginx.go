@@ -39,10 +39,10 @@ type NginxConf struct {
 // The template engine being used is the one packaged with golang. It will
 // replace the following vars.
 //
-// * {{.App}} -> shoehorn.cfg#App
+// * {{.App}} -> shoehorn.cfg        #App
 // * {{.Pwd}} -> current working dir
-// * {{.Domains}} -> shoehorn.cfg#Domains
-// * {{.Allow}} -> shoehorn.cfg#Allow
+// * {{.Domains}} -> shoehorn.cfg    # Domains
+// * {{.Allow}} -> shoehorn.cfg      # Allow
 // * {{.Ports}} -> public ports
 //
 // Then it will attempt to reload nginx configuration.
@@ -101,7 +101,7 @@ upstream {{.App}} {
 server {
   listen       80;
   client_max_body_size 20M;
-  server_name  {{.Domains}} ;
+  server_name  {{.Domains}};
 
   keepalive_timeout 5;
 

@@ -295,24 +295,33 @@ func ip(instance int) string {
 
 func ports(instance int, settings map[string]interface{}) (public, private Ports) {
 
-	if settings["PortMapping"] != nil {
-		s := settings["PortMapping"].(map[string]interface{})
+	if settings["Ports"] != nil {
+		s := settings["Ports"].(map[string]interface{})
 
-		if s["Tcp"] != nil {
-			for private_port, public_port := range s["Tcp"].(map[string]interface{}) {
-				private.tcp = private_port
-				public.tcp = public_port.(string)
+		for key, value := range s {
+			if strings.Contains(key, "tcp") {
+				private.tcp = strings.Split(key, "/")[0]
+
+				for _, data := range value.([]interface{}) {
+					for host, host_val := range data.(map[string]interface{}) {
+						if strings.Contains(host, "Port") {
+							public.tcp = host_val.(string)
+						}
+					}
+				}
+			} else if strings.Contains(key, "udp") {
+				private.udp = strings.Split(key, "/")[0]
+
+				for _, data := range value.([]interface{}) {
+					for host, host_val := range data.(map[string]interface{}) {
+						if strings.Contains(host, "Port") {
+							public.udp = host_val.(string)
+						}
+					}
+				}
+
 			}
-
 		}
-
-		if s["Udp"] != nil {
-			for private_port, public_port := range s["Udp"].(map[string]interface{}) {
-				private.tcp = private_port
-				public.tcp = public_port.(string)
-			}
-		}
-
 	}
 	return
 }
