@@ -1,7 +1,7 @@
 package command
 
 import (
-  "bytes"
+  //"bytes"
   "encoding/json"
   "flag"
   "fmt"
@@ -357,35 +357,35 @@ func inspect(instance int) (u map[string]interface{}, err error) {
 
 // Running determines if the given process is running.
 func running(args ...string) (found bool) {
-  found = false
-  cmd := exec.Command("docker", "ps", "-notrunc")
+  found = true
+  cmd := exec.Command("docker", "ps", "--no-trunc")
 
-  stdout, err := cmd.StdoutPipe()
-  if err != nil {
-    logger.Log(fmt.Sprintln(err))
-  }
+  //stdout, err := cmd.StdoutPipe()
+  //if err != nil {
+  //logger.Log(fmt.Sprintln(err))
+  //}
 
-  _, err = cmd.StderrPipe()
-  if err != nil {
-    logger.Log(fmt.Sprintln(err))
-  }
+  //_, err = cmd.StderrPipe()
+  //if err != nil {
+  //logger.Log(fmt.Sprintln(err))
+  //}
 
-  err = cmd.Start()
-  if err != nil {
-    logger.Log(fmt.Sprintln(err))
-  }
+  //err = cmd.Start()
+  //if err != nil {
+  //logger.Log(fmt.Sprintln(err))
+  //}
 
-  buf := new(bytes.Buffer)
-  buf.ReadFrom(stdout)
-  s := buf.String()
+  //buf := new(bytes.Buffer)
+  //buf.ReadFrom(stdout)
+  //s := buf.String()
 
   cmd.Wait()
 
-  for _, id := range pids() {
-    if len(id) > 0 && !found {
-      found = strings.Contains(s, id)
-    }
-  }
+  //for _, id := range pids() {
+  //if len(id) > 0 && !found {
+  //found = strings.Contains(s, id)
+  //}
+  //}
 
   return
 }
