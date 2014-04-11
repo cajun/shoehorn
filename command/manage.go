@@ -357,7 +357,7 @@ func inspect(instance int) (u map[string]interface{}, err error) {
 
 // Running determines if the given process is running.
 func running(args ...string) (found bool) {
-  found = true
+  found = false
   cmd := exec.Command("docker", "ps", "--no-trunc")
 
   stdout, err := cmd.StdoutPipe()
