@@ -14,8 +14,9 @@ import (
 )
 
 var (
-  available Available
-  root      = "."
+  available     Available
+  root          = "."
+  asInteractive = true
 )
 
 type Ports struct {
@@ -62,6 +63,7 @@ func (a *Available) addInteractive(name string, exe Executor) {
 
 func init() {
   flag.StringVar(&root, "root", ".", "which dir at the apps located")
+  flag.BoolVar(&asInteractive, "asInteractive", true, "run commands as interactive commands")
 
   available.addDaemon("start", Executor{
     description: "start the given process",
@@ -448,7 +450,10 @@ func run(command string, inOpts ...string) error {
 // runInteractive will give the user the option for input into the
 // docker command. examples would be running bash or ssh
 func runInteractive(command string, inOpts ...string) error {
-  base := []string{command, "-i", "-t"}
+  base := []string{command, "-t"}
+  if asInteractive {
+    base = append(base, "-i")
+  }
   opts := append(base, inOpts...)
   outOpts(opts)
 
@@ -456,6 +461,19 @@ func runInteractive(command string, inOpts ...string) error {
   cmd.Stdout = os.Stdout
   cmd.Stderr = os.Stderr
   cmd.Stdin = os.Stdin
+  return cmd.Run()
+}
+
+// runOnce will run a single command and put the output to STDOUT
+// examples would be running a backup script
+func runOnce(command string, inOpts ...string) error {
+  base := []string{command, "-t"}
+  opts := append(base, inOpts...)
+  outOpts(opts)
+
+  cmd := exec.Command("docker", opts...)
+  cmd.Stdout = os.Stdout
+  cmd.Stderr = os.Stderr
   return cmd.Run()
 }
 

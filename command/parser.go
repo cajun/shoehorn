@@ -27,6 +27,7 @@ func init() {
 }
 
 func MkDirs() {
+  // TODO: Wrap around check for shoehorn.cfg
   os.MkdirAll("tmp/pids", os.ModeDir|0700)
   os.MkdirAll("log", os.ModeDir|0700)
   os.MkdirAll("config", os.ModeDir|0700)
